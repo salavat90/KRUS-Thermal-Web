@@ -3,25 +3,32 @@ const layered=typeof require==='function'?require('./layered-tetra.js'):null;
 function buildRandomizedTetraMesh(opts){
  const base=(layered?layered.makeLayeredTankMesh:makeLayeredTankMesh)(opts);
  const {pts,tets,regions}=base;
- const budgets={steel:Math.max(0,Math.floor(opts.metalPoints||0)),insulation:Math.max(0,Math.floor(opts.insulationPoints||0))};
+ const budgets={steel:Number(opts.metalPoints||0),insulation:Number(opts.insulationPoints||0)};
+ if(!Object.values(budgets).every(v=>Number.isSafeInteger(v)&&v>=0))throw Error('Point budgets must be non-negative safe integers');
  let state=(opts.seed|0)||1;
  const rand=()=>{state^=state<<13;state^=state>>>17;state^=state<<5;return (state>>>0)/4294967296};
- // Each selected tetrahedron gets one independent random interior vertex.
- // Four children share its original faces: conformity is preserved.
+ // Repeated independent interior insertion allows requested counts beyond the initial tetra count.
+ // Each split replaces one tetrahedron with four; its external faces are unchanged.
  for(const material of ['steel','insulation']){
-  const eligible=[];for(let i=0;i<regions.length;i++)if(regions[i]===material)eligible.push(i);
-  const count=Math.min(budgets[material],eligible.length);
-  for(let i=eligible.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[eligible[i],eligible[j]]=[eligible[j],eligible[i]]}
-  const chosen=new Set(eligible.slice(0,count)),newT=[],newR=[];
-  for(let i=0;i<tets.length;i++){
-   const t=tets[i];
-   if(!chosen.has(i)){newT.push(t);newR.push(regions[i]);continue}
-   const w=Array.from({length:4},()=>.12+rand()),sum=w.reduce((a,b)=>a+b,0);
-   const p=[0,0,0];for(let j=0;j<4;j++)for(let c=0;c<3;c++)p[c]+=pts[t[j]][c]*w[j]/sum;
-   const id=pts.length;pts.push(p);
-   for(const face of [[0,1,2],[0,1,3],[0,2,3],[1,2,3]]){newT.push([id,...face.map(j=>t[j])]);newR.push(regions[i])}
+  const count=budgets[material];
+  let eligible=[];for(let i=0;i<regions.length;i++)if(regions[i]===material)eligible.push(i);
+  let added=0;
+  while(added<count){
+   const batch=Math.min(count-added,eligible.length);
+   for(let i=eligible.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[eligible[i],eligible[j]]=[eligible[j],eligible[i]]}
+   const chosen=new Set(eligible.slice(0,batch)),newT=[],newR=[];
+   for(let i=0;i<tets.length;i++){
+    const t=tets[i];
+    if(!chosen.has(i)){newT.push(t);newR.push(regions[i]);continue}
+    const w=Array.from({length:4},()=>.25+rand()),sum=w.reduce((a,b)=>a+b,0);
+    const point=[0,0,0];for(let j=0;j<4;j++)for(let c=0;c<3;c++)point[c]+=pts[t[j]][c]*w[j]/sum;
+    const id=pts.length;pts.push(point);
+    for(const face of [[0,1,2],[0,1,3],[0,2,3],[1,2,3]]){newT.push([id,...face.map(j=>t[j])]);newR.push(regions[i])}
+   }
+   tets.splice(0,tets.length,...newT);regions.splice(0,regions.length,...newR);
+   added+=batch;
+   eligible=[];for(let i=0;i<regions.length;i++)if(regions[i]===material)eligible.push(i);
   }
-  tets.splice(0,tets.length,...newT);regions.splice(0,regions.length,...newR);
  }
  return {...base,stats:{...base.stats,nodes:pts.length,tetrahedra:tets.length,randomInteriorNodes:pts.length-base.stats.nodes}};
 }
