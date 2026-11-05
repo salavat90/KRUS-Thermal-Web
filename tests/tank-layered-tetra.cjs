@@ -25,3 +25,13 @@ for(const angular of [12,36]){
  assert.ok(interfaces.every(([key])=>faces.get(key)===2));
  console.log('PASS layered mesh',angular,m.stats);
 }
+
+const {makeLayeredTankMesh:build}=require('../3d/layered-tetra.js');
+const a=build({angular:24,steelLayers:2,insulationLayers:4,axial:8,randomize:.15,seed:42});
+const b=build({angular:24,steelLayers:2,insulationLayers:4,axial:8,randomize:.15,seed:42});
+const c=build({angular:24,steelLayers:2,insulationLayers:4,axial:8,randomize:.15,seed:43});
+assert.deepEqual(a.pts,b.pts,'same seed must reproduce coordinates');
+assert.notDeepEqual(a.pts,c.pts,'different seeds must change interior coordinates');
+assert.ok(a.stats.minVolume>0);
+assert.equal(a.stats.interfaceNodes,24*9);
+console.log('PASS seeded random interior nodes and preserved shared interface');
