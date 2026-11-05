@@ -1,0 +1,21 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync('index.html','utf8');
+const code=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+assert.ok(code,'inline application script');
+const elements=new Map();
+const defaults={d:273,w:8,ins:45,kp:45,ki:.04,kc:.25,cd:6,pow:30,count:2,ang:135,kw:.6,air:-45,h:12,waterSet:5,mode:'closed'};
+for(const [k,v] of Object.entries(defaults))elements.set(k,{value:String(v),style:{},addEventListener(){}});
+elements.set('fields',{set innerHTML(v){this.content=v},get innerHTML(){return this.content},addEventListener(){}});
+for(const id of ['metrics','status'])elements.set(id,{textContent:'',innerHTML:''});
+const ctx={setTransform(){},fillRect(){},clearRect(){},save(){},restore(){},translate(){},scale(){},beginPath(){},arc(){},fill(){},stroke(){},drawImage(){},createImageData(){return {data:new Uint8ClampedArray(4*130*130)}}};
+const canvas={clientWidth:800,clientHeight:700,getContext(){return ctx},addEventListener(){},getBoundingClientRect(){return {left:0,top:0}}};
+elements.set('c',canvas);elements.set('run',{});elements.set('fit',{});
+const sandbox={console,Math,Number,Float64Array,Uint8Array,Int16Array,document:{getElementById:id=>{if(!elements.has(id))throw Error('Missing '+id);return elements.get(id)},createElement:()=>({width:0,height:0,getContext(){return ctx}})},window:{addEventListener(){},devicePixelRatio:1},devicePixelRatio:1};
+vm.createContext(sandbox);vm.runInContext(code,sandbox,{timeout:1000});
+const calc=()=>vm.runInContext('solve()',sandbox,{timeout:25000});
+function run(name,fn){const t=Date.now();try{fn();console.log('PASS',name,Date.now()-t+'ms')}catch(e){console.error('FAIL',name,e.message);process.exitCode=1}}
+run('default closed water conserves power',()=>{let m=calc();assert.ok(Math.abs(m.power-60)<1e-8);assert.ok(Math.abs(m.residual)<0.5,'energy residual '+m.residual);assert.ok(Number.isFinite(m.waterMean));});
+run('higher heater power raises closed-water temperature',()=>{let a=calc();elements.get('pow').value='40';let b=calc();assert.ok(b.waterMean>a.waterMean);elements.get('pow').value='30'});
+run('fixed water temperature boundary is enforced',()=>{elements.get('mode').value='fixed';let m=calc();assert.ok(Math.abs(m.waterMean-5)<.001);assert.ok(Math.abs(m.power+m.product-m.loss)<.5);elements.get('mode').value='closed'});
+run('invalid insulation rejected',()=>{elements.get('ins').value='0';assert.throws(calc);elements.get('ins').value='45'});
+console.log('Note: ELCUT 15-case comparisons remain BLOCKED until matching geometry and boundary conditions are known.');
