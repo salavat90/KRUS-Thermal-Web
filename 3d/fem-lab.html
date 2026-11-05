@@ -1,0 +1,42 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС-Thermal 3D FEM Lab</title><style>body{margin:0;background:#142239;color:#eaf3ff;font:14px system-ui}header,aside,section{padding:15px;background:#1d304c}header a{color:#93d3ff}main{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px}label{display:block;margin:10px 0 4px;font-size:12px}input,select{box-sizing:border-box;width:100%;background:#294563;color:white;border:1px solid #607a97;padding:8px;border-radius:4px}button{background:#287dbb;color:white;border:0;border-radius:5px;padding:10px;margin-top:12px;cursor:pointer}button:disabled{opacity:.5}canvas{display:block;width:100%;height:68vh;touch-action:none;background:#edf3f8}#results{white-space:pre-line;line-height:1.7}.note{font-size:12px;color:#b9cde2}@media(max-width:760px){main{grid-template-columns:1fr}canvas{height:48vh}}</style><header><b>КРУС-Thermal · 3D FEM Lab</b>　<a href="../random-mesh.html">2D для тестирования</a></header><main><aside><b>Контрольная цилиндрическая задача</b><label>Наружный диаметр, мм</label><input id="diameter" type="number" value="273"><label>Высота, мм</label><input id="height" type="number" value="1000"><label>Стенка, мм</label><input id="wall" type="number" value="8"><label>Изоляция, мм</label><input id="insulation" type="number" value="45"><label>λ стали, Вт/(м·К)</label><input id="lambdaSteel" type="number" value="45"><label>λ изоляции, Вт/(м·К)</label><input id="lambdaInsulation" type="number" value=".04" step="any"><label>Температура внутренней поверхности, °C</label><input id="tProduct" type="number" value="5"><label>Температура воздуха, °C</label><input id="tAmbient" type="number" value="-45"><label>Наружная теплоотдача, Вт/(м²·К)</label><input id="hOutside" type="number" value="12"><label>Случайных вершин в стали</label><input id="metalPoints" type="number" value="150" min="0" max="1500"><label>Случайных вершин в изоляции</label><input id="insulationPoints" type="number" value="400" min="0" max="3000"><label>Зерно</label><input id="seed" type="number" value="42"><label>Плотность базовой сетки</label><select id="quality"><option value="low">Низкая</option><option value="medium">Средняя</option></select><label>Отображение</label><select id="mode"><option value="temperature">Температура</option><option value="mesh">Тетраэдральные грани</option></select><button id="run">Построить и рассчитать</button><p class="note">Случайные внутренние вершины создаются разбиением существующих тетраэдров, без разрывов границ материалов. Жидкость, днища и опоры ещё не входят в FEM. Торцы цилиндрической задачи адиабатические.</p></aside><section><div id="status">Готов к расчёту</div><div style="position:relative"><canvas id="view"></canvas><div id="legend" style="display:none;position:absolute;right:12px;top:12px;background:rgba(250,252,255,.93);padding:9px;color:#26384c;border-radius:6px;font:12px system-ui"><b>°C</b><div id="maxT"></div><div style="height:220px;width:24px;background:linear-gradient(to bottom,red,orange,yellow,lime,cyan,blue)"></div><div id="minT"></div></div></div><div id="results"></div></section></main><script>window.addEventListener('error',e=>document.getElementById('status').textContent='Ошибка: '+e.message);window.addEventListener('unhandledrejection',e=>document.getElementById('status').textContent='Ошибка: '+(e.reason?.message||e.reason));</script><script src="./layered-tetra.js"></script><script src="./tetra-thermal.js"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script><script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const $=id=>document.getElementById(id),canvas=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color(0xedf3f8);
+const camera=new THREE.PerspectiveCamera(42,1,.001,100),renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;scene.add(new THREE.HemisphereLight(0xffffff,0x889aaa,2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(3,6,5);scene.add(light);
+const root=new THREE.Group();scene.add(root);let result=null;
+function clear(){for(const child of [...root.children]){root.remove(child);child.traverse(x=>{x.geometry?.dispose();x.material?.dispose()})}}
+function display(){
+ if(!result)return;clear();const {mesh,temperature,min,max}=result,faces=new Map();
+ for(const t of mesh.tets)for(const f of [[0,1,2],[0,1,3],[0,2,3],[1,2,3]]){const ids=f.map(j=>t[j]),key=ids.slice().sort((a,b)=>a-b).join(':');if(faces.has(key))faces.delete(key);else faces.set(key,ids)}
+ const positions=[],colors=[],lines=[],mode=$('mode').value;
+ for(const ids of faces.values()){
+  const coords=ids.map(i=>mesh.pts[i]),r=coords.map(p=>Math.hypot(p[0],p[2]));
+  // Show outer insulation, top and bottom cross-sections, and a cutaway quarter of the shell.
+  const outer=r.every(v=>Math.abs(v-(Number($('diameter').value)/2000+Number($('insulation').value)/1000))<1e-5);
+  const end=coords.every(p=>Math.abs(Math.abs(p[1])-Number($('height').value)/2000)<1e-5);
+  if(!outer&&!end)continue;
+  const T=ids.reduce((a,i)=>a+temperature[i],0)/3,f=Math.max(0,Math.min(1,(T-min)/Math.max(1e-9,max-min)));
+  const color=new THREE.Color().setHSL(.67*(1-f),.95,.5);
+  for(const i of ids){positions.push(...mesh.pts[i]);colors.push(color.r,color.g,color.b)}
+  for(let i=0;i<3;i++){lines.push(...mesh.pts[ids[i]],...mesh.pts[ids[(i+1)%3]])}
+ }
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ const surface=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:mode==='mesh'?.18:1,depthWrite:mode!=='mesh'}));root.add(surface);
+ if(mode==='mesh'){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(lines,3));root.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x244d70,transparent:true,opacity:.65})))}
+ $('legend').style.display=mode==='temperature'?'block':'none';$('maxT').textContent=max.toFixed(2);$('minT').textContent=min.toFixed(2);
+}
+function run(){try{
+ const p={};for(const id of ['diameter','height','wall','insulation','lambdaSteel','lambdaInsulation','tProduct','tAmbient','hOutside','metalPoints','insulationPoints','seed'])p[id]=Number($(id).value);
+ Object.assign(p,$('quality').value==='low'?{angular:16,steelLayers:2,insulationLayers:3,axial:6}:{angular:24,steelLayers:2,insulationLayers:4,axial:8});
+ $('status').textContent='Сборка FEM-матрицы и решение…';$('run').disabled=true;
+ setTimeout(()=>{try{result=solveTankTetra(p);display();const r=result;
+ const ri=(p.diameter/2-p.wall)/1000,ro=p.diameter/2000,re=ro+p.insulation/1000,L=p.height/1000;
+ const analytic=(p.tProduct-p.tAmbient)/(Math.log(ro/ri)/(2*Math.PI*p.lambdaSteel*L)+Math.log(re/ro)/(2*Math.PI*p.lambdaInsulation*L)+1/(p.hOutside*2*Math.PI*re*L));
+ $('results').textContent='Узлов: '+r.mesh.stats.nodes+' · Тетраэдров: '+r.mesh.stats.tetrahedra+'\nСлучайных внутренних вершин: '+r.mesh.stats.randomInteriorNodes+'\nИтераций PCG: '+r.iterations+' · относительная невязка: '+r.relativeResidual.toExponential(2)+'\nТеплопотери FEM: '+r.qOut.toFixed(4)+' Вт\nАналитически: '+analytic.toFixed(4)+' Вт\nОтклонение: '+(100*(r.qOut-analytic)/analytic).toFixed(3)+' %\nБаланс FEM: '+r.balance.toExponential(3)+' Вт';
+ $('status').textContent='Расчёт завершён: стационарная 3D теплопроводность цилиндрической стенки и изоляции.';
+ }catch(e){$('status').textContent='Ошибка расчёта: '+e.message}finally{$('run').disabled=false}},20);
+ }catch(e){$('status').textContent='Ошибка параметров: '+e.message}}
+$('run').onclick=run;$('mode').onchange=display;
+new ResizeObserver(()=>{const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(canvas);
+camera.position.set(.8,.7,.9);controls.update();function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)}frame();
+</script>
