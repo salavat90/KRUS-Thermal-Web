@@ -19,6 +19,8 @@ jobs:
         run: node --check tests/solver-smoke.cjs
       - name: Thermal solver smoke tests
         run: node tests/solver-smoke.cjs
+      - name: Independent triangular FEM annulus convergence
+        run: node tests/fem-triangle-annulus.cjs
       - name: Independent analytical heat-loss reference
         run: node tests/analytic-reference.cjs
       - name: Validate ELCUT reference schema
