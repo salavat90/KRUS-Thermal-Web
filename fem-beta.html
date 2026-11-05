@@ -1,0 +1,50 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС FEM Beta</title><style>body{background:#111c2e;color:#eef;font:14px system-ui;margin:0}header,aside,section{background:#1d304a;padding:16px}main{display:grid;grid-template-columns:280px 1fr;gap:12px;padding:12px}label{display:block;margin-top:9px;font-size:12px}input,select{width:100%;padding:8px;box-sizing:border-box;background:#29415e;color:white;border:1px solid #526a83}button{padding:10px;background:#2379bd;color:white;border:0;margin-top:14px}canvas{width:100%;height:60vh;background:#f4f8fc}small{color:#bfd0e3}a{color:#8cf}#out{white-space:pre-wrap;line-height:1.7}@media(max-width:700px){main{grid-template-columns:1fr}canvas{height:45vh}}</style><header><b>КРУС-Thermal · FEM Beta</b>　<a href="./">Основная версия</a></header><main><aside><b>Проверочный FEM-модуль</b><label>Наружный диаметр, мм</label><input id="diam" type="number" value="273"><label>Стенка, мм</label><input id="wall" type="number" value="8"><label>Изоляция, мм</label><input id="ins" type="number" value="45"><label>Мощность одного кабеля, Вт/м</label><input id="power" type="number" value="30"><label>Кабелей</label><select id="count"><option>1</option><option selected>2</option><option>3</option></select><label>Температура воздуха, °C</label><input id="air" type="number" value="-45"><label>Наружная конвекция, Вт/(м²·К)</label><input id="h" type="number" value="12"><label>λ изоляции, Вт/(м·К)</label><input id="ki" type="number" value=".04"><label>λ стали, Вт/(м·К)</label><input id="ks" type="number" value="45"><label>λ воды, Вт/(м·К)</label><input id="kw" type="number" value=".6"><label>Режим воды</label><select id="mode"><option value="closed">Стоячая — равновесие</option><option value="fixed">Температура поддерживается</option></select><label>Поддерживаемая температура, °C</label><input id="water" type="number" value="5"><button id="run">Рассчитать FEM</button><p><small>Тестовый FEM с линейными треугольниками. Кабель пока моделируется как локальный источник, а не как отдельное тело с оболочкой. Для температуры оболочки нужна согласованная геометрия кабеля. Естественная конвекция воды не учитывается.</small></p></aside><section><canvas id="view"></canvas><p id="status">Готов к расчёту</p><div id="out"></div></section></main><script>
+const $=id=>document.getElementById(id),canvas=$('view');let active=null;
+function fem(p){
+ const pi=Math.PI,sec=72,ri=(p.diam/2-p.wall)/1000,ro=p.diam/2000,re=ro+p.ins/1000;
+ if(!(ri>0&&ro>ri&&re>ro&&p.ki>0&&p.ks>0&&p.kw>0&&p.h>0&&p.count>0&&p.count<=3&&p.power>=0))throw Error('Проверьте параметры');
+ const nw=8,ns=4,ni=14,radii=[];
+ for(let j=0;j<=nw;j++)radii.push(ri*j/nw);
+ for(let j=1;j<=ns;j++)radii.push(ri+(ro-ri)*j/ns);
+ for(let j=1;j<=ni;j++)radii.push(ro+(re-ro)*j/ni);
+ const pts=[[0,0]],idx=(j,i)=>1+j*sec+(i%sec);
+ for(const r of radii)for(let i=0;i<sec;i++){let a=2*pi*i/sec;pts.push([r*Math.cos(a),r*Math.sin(a)])}
+ const tri=[],reg=[];
+ for(let i=0;i<sec;i++){tri.push([0,idx(0,i),idx(0,i+1)]);reg.push(1)}
+ for(let j=0;j<radii.length-1;j++)for(let i=0;i<sec;i++){let a=idx(j,i),b=idx(j,i+1),c=idx(j+1,i),d=idx(j+1,i+1),m=j<nw?1:j<nw+ns?2:3;tri.push([a,c,d],[a,d,b]);reg.push(m,m)}
+ const n=pts.length,diag=new Float64Array(n),rhs=new Float64Array(n),adj=Array.from({length:n},()=>new Map()),k=[0,p.kw,p.ks,p.ki],centers=[];
+ const add=(i,j,v)=>{if(i===j)diag[i]+=v;else adj[i].set(j,(adj[i].get(j)||0)+v)};
+ for(let j=0;j<p.count;j++){let a=(135+j*60-90)*pi/180;centers.push([(ro+.003)*Math.cos(a),(ro+.003)*Math.sin(a)])}
+ const near=centers.map(()=>[]);
+ for(let t=0;t<tri.length;t++){let v=tri[t],a=v.map(i=>pts[i]),area=Math.abs((a[1][0]-a[0][0])*(a[2][1]-a[0][1])-(a[2][0]-a[0][0])*(a[1][1]-a[0][1]))/2;
+ let bx=[a[1][1]-a[2][1],a[2][1]-a[0][1],a[0][1]-a[1][1]],by=[a[2][0]-a[1][0],a[0][0]-a[2][0],a[1][0]-a[0][0]];
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)add(v[i],v[j],k[reg[t]]*(bx[i]*bx[j]+by[i]*by[j])/(4*area));
+ if(reg[t]===3){let x=(a[0][0]+a[1][0]+a[2][0])/3,y=(a[0][1]+a[1][1]+a[2][1])/3;centers.forEach(([cx,cy],j)=>near[j].push([Math.hypot(x-cx,y-cy),t]))}}
+ for(const list of near){list.sort((a,b)=>a[0]-b[0]);for(const [,t] of list.slice(0,5))for(const i of tri[t])rhs[i]+=p.power/15}
+ let qout=0,outer=radii.length-1;
+ for(let i=0;i<sec;i++){let a=idx(outer,i),b=idx(outer,i+1),L=Math.hypot(pts[a][0]-pts[b][0],pts[a][1]-pts[b][1]);add(a,a,p.h*L/3);add(b,b,p.h*L/3);add(a,b,p.h*L/6);add(b,a,p.h*L/6);rhs[a]+=p.h*p.air*L/2;rhs[b]+=p.h*p.air*L/2}
+ const fixed=i=>p.mode==='fixed'&&(i===0||i<=nw*sec),x=new Float64Array(n),r=new Float64Array(n),z=new Float64Array(n),d=new Float64Array(n),Ad=new Float64Array(n),b=new Float64Array(n);
+ let rz=0,norm=0;
+ for(let i=0;i<n;i++){x[i]=fixed(i)?p.water:p.air;if(fixed(i))continue;b[i]=rhs[i];for(const [j,v] of adj[i])if(fixed(j))b[i]-=v*p.water}
+ for(let i=0;i<n;i++){if(fixed(i))continue;let ax=diag[i]*x[i];for(const [j,v] of adj[i])if(!fixed(j))ax+=v*x[j];r[i]=b[i]-ax;z[i]=r[i]/diag[i];d[i]=z[i];rz+=r[i]*z[i];norm+=b[i]*b[i]}
+ let it=0,res=Infinity;
+ for(;it<6000;it++){let rr=0;for(let i=0;i<n;i++)rr+=r[i]*r[i];res=Math.sqrt(rr);if(res<Math.max(1e-9,Math.sqrt(norm)*1e-8))break;
+ let den=0;for(let i=0;i<n;i++){if(fixed(i))continue;let v=diag[i]*d[i];for(const [j,g] of adj[i])if(!fixed(j))v+=g*d[j];Ad[i]=v;den+=d[i]*v}if(!(den>0))throw Error('Ошибка матрицы FEM');
+ let alpha=rz/den,next=0;for(let i=0;i<n;i++){if(fixed(i))continue;x[i]+=alpha*d[i];r[i]-=alpha*Ad[i];z[i]=r[i]/diag[i];next+=r[i]*z[i]}let beta=next/rz;for(let i=0;i<n;i++)if(!fixed(i))d[i]=z[i]+beta*d[i];rz=next}
+ if(it===6000)throw Error('FEM не сошёлся');
+ for(let i=0;i<sec;i++){let a=idx(outer,i),b=idx(outer,i+1),L=Math.hypot(pts[a][0]-pts[b][0],pts[a][1]-pts[b][1]);qout+=p.h*L*((x[a]+x[b])/2-p.air)}
+ let qwater=0;if(p.mode==='fixed')for(let i=0;i<n;i++)if(fixed(i)){let v=diag[i]*x[i]-rhs[i];for(const [j,g] of adj[i])v+=g*x[j];qwater-=v}
+ let min=Infinity,max=-Infinity,water=0,num=0;for(let i=0;i<n;i++){min=Math.min(min,x[i]);max=Math.max(max,x[i]);if(Math.hypot(...pts[i])<ri){water+=x[i];num++}}
+ return {pts,tri,t:Array.from(x),min,max,water:water/num,qout,qwater,balance:p.power*p.count+qwater-qout,iterations:it};
+}
+let worker=null;
+$('run').onclick=()=>{if(worker)worker.terminate();let p={};for(const id of ['diam','wall','ins','power','count','air','h','ki','ks','kw','water'])p[id]=Number($(id).value);p.mode=$('mode').value;
+$('status').textContent='Расчёт…';$('run').disabled=true;
+let src='const fem='+fem.toString()+';self.onmessage=e=>{try{self.postMessage({ok:true,result:fem(e.data)})}catch(err){self.postMessage({ok:false,error:err.message})}}';
+let url=URL.createObjectURL(new Blob([src],{type:'application/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);
+worker.onmessage=e=>{worker.terminate();worker=null;$('run').disabled=false;if(!e.data.ok){$('status').textContent=e.data.error;return}let m=e.data.result,ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,scale=Math.min(w,h)*.44/(p.diam/2000+p.ins/1000);canvas.width=w*devicePixelRatio;canvas.height=h*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.fillStyle='#f4f8fc';ctx.fillRect(0,0,w,h);
+for(const tr of m.tri){let t=tr.reduce((a,i)=>a+m.t[i],0)/3,f=Math.max(0,Math.min(1,(t-m.min)/Math.max(.001,m.max-m.min)));ctx.fillStyle='hsl('+(240-240*f)+',90%,50%)';ctx.beginPath();tr.forEach((i,j)=>{let [x,y]=m.pts[i],X=w/2+x*scale,Y=h/2+y*scale;j?ctx.lineTo(X,Y):ctx.moveTo(X,Y)});ctx.closePath();ctx.fill()}
+$('status').textContent='FEM завершён';$('out').textContent='Треугольников: '+m.tri.length+'\nИтераций: '+m.iterations+'\nВода средняя: '+m.water.toFixed(2)+' °C\nT min/max: '+m.min.toFixed(2)+' / '+m.max.toFixed(2)+' °C\nМощность кабелей: '+(p.power*p.count).toFixed(2)+' Вт/м\nПотери наружу: '+m.qout.toFixed(2)+' Вт/м\nТепло от воды (+) / в воду (−): '+m.qwater.toFixed(2)+' Вт/м\nНевязка: '+m.balance.toFixed(5)+' Вт/м';};
+worker.onerror=e=>{$('status').textContent='Ошибка: '+e.message;$('run').disabled=false;worker.terminate();worker=null};
+worker.postMessage(p)};
+</script></html>
