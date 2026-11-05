@@ -1,7 +1,7 @@
 'use strict';
 // Shared-node structured tetrahedral mesh of the cylindrical steel wall and insulation.
 // Ends, supports, liquid and gas are NOT meshed by this module.
-function makeLayeredTankMesh({diameter=2000,wall=8,insulation=100,height=3500,angular=48,steelLayers=2,insulationLayers=5,axial=16}={}){
+function makeLayeredTankMesh({diameter=2000,wall=8,insulation=100,height=3500,angular=48,steelLayers=2,insulationLayers=5,axial=16,randomize=0,seed=42}={}){
  const vals=[diameter,wall,insulation,height,angular,steelLayers,insulationLayers,axial];
  if(!vals.every(Number.isFinite)||diameter<=2*wall||wall<=0||insulation<=0||height<=0||angular<8||steelLayers<1||insulationLayers<1||axial<1||![angular,steelLayers,insulationLayers,axial].every(Number.isInteger))throw Error('Invalid tank mesh parameters');
  const ri=(diameter/2-wall)/1000,rs=diameter/2000,re=rs+insulation/1000,H=height/1000;
@@ -12,6 +12,23 @@ function makeLayeredTankMesh({diameter=2000,wall=8,insulation=100,height=3500,an
  const idx=(k,j,i)=>((k*(nr+1)+j)*angular+(i%angular));
  for(let k=0;k<=axial;k++)for(let j=0;j<=nr;j++)for(let i=0;i<angular;i++){
   const a=2*Math.PI*i/angular,r=radii[j];pts.push([r*Math.cos(a),-H/2+H*k/axial,r*Math.sin(a)]);
+ }
+ // Seeded perturbation of interior nodes: preserves shared material boundaries and topology.
+ // This is NOT unconstrained random Delaunay tetrahedralization.
+ if(!Number.isFinite(randomize)||randomize<0||randomize>.25||!Number.isInteger(seed))throw Error('Invalid randomization');
+ let state=seed|0;const rand=()=>{state^=state<<13;state^=state>>>17;state^=state<<5;return (state>>>0)/4294967296};
+ for(let k=1;k<axial;k++)for(let j=1;j<nr;j++){
+  if(j===steelLayers)continue;
+  const dr=Math.min(radii[j]-radii[j-1],radii[j+1]-radii[j]);
+  for(let i=0;i<angular;i++){
+   const id=idx(k,j,i),a=2*Math.PI*i/angular,r=radii[j];
+   const radialShift=(rand()*2-1)*dr*randomize;
+   const tangentialShift=(rand()*2-1)*r*(2*Math.PI/angular)*randomize;
+   const verticalShift=(rand()*2-1)*(H/axial)*randomize;
+   pts[id][0]+=radialShift*Math.cos(a)-tangentialShift*Math.sin(a);
+   pts[id][2]+=radialShift*Math.sin(a)+tangentialShift*Math.cos(a);
+   pts[id][1]+=verticalShift;
+  }
  }
  const offsets=[[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
  const patterns=[[0,1,3,7],[0,1,5,7],[0,2,3,7],[0,2,6,7],[0,4,5,7],[0,4,6,7]];
@@ -30,6 +47,6 @@ function makeLayeredTankMesh({diameter=2000,wall=8,insulation=100,height=3500,an
  }
  const interfaceNodes=[];
  for(let k=0;k<=axial;k++)for(let i=0;i<angular;i++)interfaceNodes.push(idx(k,steelLayers,i));
- return {pts,tets,regions,interfaceNodes,stats:{nodes:pts.length,tetrahedra:tets.length,steelTetrahedra:regions.filter(x=>x==='steel').length,insulationTetrahedra:regions.filter(x=>x==='insulation').length,interfaceNodes:interfaceNodes.length,minVolume,corrected}};
+ return {pts,tets,regions,interfaceNodes,stats:{nodes:pts.length,tetrahedra:tets.length,steelTetrahedra:regions.filter(x=>x==='steel').length,insulationTetrahedra:regions.filter(x=>x==='insulation').length,interfaceNodes:interfaceNodes.length,minVolume,corrected,randomize,seed}};
 }
 if(typeof module!=='undefined')module.exports={makeLayeredTankMesh};
