@@ -86,7 +86,7 @@ function display(){
  const envelope=new THREE.Mesh(new THREE.CylinderGeometry(R+ins,R+ins,H,64,1,true),new THREE.MeshBasicMaterial({color:0x9db5c6,transparent:true,opacity:.10,side:THREE.DoubleSide,depthWrite:false}));
  if(!result.fullVessel)root.add(envelope);
  const attachment=result.fullVessel?null:result.attachments;
- const capColor=attachment?new THREE.Color().setHSL(.67*(1-Math.max(0,Math.min(1,(attachment.upper.tOuter-min)/Math.max(1e-9,max-min)))),.95,.5):new THREE.Color(0x91a6b6);
+ const capColor=attachment&&!fluxMode?new THREE.Color().setHSL(.67*(1-Math.max(0,Math.min(1,(attachment.upper.tOuter-min)/Math.max(1e-9,max-min)))),.95,.5):new THREE.Color(0x91a6b6);
  const capMat=new THREE.MeshBasicMaterial({color:capColor,transparent:true,opacity:result.fullVessel?.10:.58,depthWrite:false});
  for(const sign of (result.fullVessel?[]:[-1,1])){
   const cap=new THREE.Mesh(new THREE.CylinderGeometry(R+ins,R+ins,ins,64),capMat.clone());
@@ -95,7 +95,7 @@ function display(){
  const n=result.fullVessel?0:Math.max(0,Math.min(32,Math.floor(Number($('supports').value)||0)));
  for(let j=0;j<n;j++){
   const a=2*Math.PI*j/Math.max(1,n),radius=R*.7,x=radius*Math.cos(a),z=radius*Math.sin(a),length=Math.max(.12,H*.22);
-  const leg=new THREE.Mesh(new THREE.BoxGeometry(.035,length+.025,.035),new THREE.MeshStandardMaterial({color:attachment?new THREE.Color().setHSL(.67*(1-Math.max(0,Math.min(1,(attachment.supports.tOuter-min)/Math.max(1e-9,max-min)))),.95,.5):0x667e92}));
+  const leg=new THREE.Mesh(new THREE.BoxGeometry(.035,length+.025,.035),new THREE.MeshStandardMaterial({color:attachment&&!fluxMode?new THREE.Color().setHSL(.67*(1-Math.max(0,Math.min(1,(attachment.supports.tOuter-min)/Math.max(1e-9,max-min)))),.95,.5):0x667e92}));
   leg.position.set(x,-H/2-length/2+.0125,z);root.add(leg);
   const pad=new THREE.Mesh(new THREE.BoxGeometry(.07,.025,.07),new THREE.MeshStandardMaterial({color:0x445b71}));
   pad.position.set(x,-H/2+.0125,z);root.add(pad);
@@ -165,7 +165,7 @@ function probeSlice(x,y){
   if(Math.abs(den)<1e-16)continue;
   const u=((b.y-c.y)*(p.x-c.x)+(c.x-b.x)*(p.y-c.y))/den,v=((c.y-a.y)*(p.x-c.x)+(a.x-c.x)*(p.y-c.y))/den,w=1-u-v;
   if(u>=-1e-7&&v>=-1e-7&&w>=-1e-7){
-   $('sliceProbe').textContent='Координаты: '+(p.x*1000).toFixed(2)+', '+(p.y*1000).toFixed(2)+' мм · T='+($('fieldMode').value==='flux'?result.flux[sliceData.tetraIndices[q]]:(u*a.t+v*b.t+w*c.t)).toFixed(3)+($('fieldMode').value==='flux'?' Вт/м²':' °C');
+   $('sliceProbe').textContent='Координаты: '+(p.x*1000).toFixed(2)+', '+(p.y*1000).toFixed(2)+' мм · '+($('fieldMode').value==='flux'?'|q|=':'T=')+($('fieldMode').value==='flux'?result.flux[sliceData.tetraIndices[q]]:(u*a.t+v*b.t+w*c.t)).toFixed(3)+($('fieldMode').value==='flux'?' Вт/м²':' °C');
    return;
   }
  }
