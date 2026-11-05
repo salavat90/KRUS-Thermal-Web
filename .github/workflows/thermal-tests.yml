@@ -19,6 +19,8 @@ jobs:
         run: node --check tests/solver-smoke.cjs
       - name: Thermal solver smoke tests
         run: node tests/solver-smoke.cjs
+      - name: Preinsulation thermal test
+        run: node tests/preinsulation.cjs
       - name: Random FEM physical invariants
         run: node tests/random-thermal-physics.cjs
       - name: Random triangular thermal FEM smoke test
