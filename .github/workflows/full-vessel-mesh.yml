@@ -1,0 +1,28 @@
+name: Full vessel Gmsh mesh validation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '3d/generate_vessel_mesh.py'
+      - 'tests/check_full_vessel_mesh.py'
+      - '.github/workflows/full-vessel-mesh.yml'
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y libglu1-mesa
+      - run: python -m pip install gmsh==4.13.1
+      - name: Generate vessel mesh
+        run: python 3d/generate_vessel_mesh.py --output vessel-mesh.json --mesh-size 80
+      - name: Check all material domains and tetrahedral interfaces
+        run: python tests/check_full_vessel_mesh.py vessel-mesh.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: krus-full-vessel-tetra-mesh
+          path: vessel-mesh.json
+          retention-days: 7
