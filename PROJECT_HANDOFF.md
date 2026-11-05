@@ -253,3 +253,6 @@
 - В `3d/fem-lab.html` блок XY/XZ/YZ, ползунок, кнопки вписать/срез через опору и переключатели сетки/точек перенесены из длинной левой панели непосредственно НАД нижним 2D-чертежом. При ошибке full FEM теперь очищаются устаревшая картинка и результаты, чтобы не показывать предыдущий расчёт как новый. Коммит `c25ad09`.
 - Добавлен регрессионный тест `tests/tank-full-contact-regression.cjs`, включён в workflow `tank-thermal.yml`. Коммиты `69a8462`, `6926752`.
 - ВАЖНО: тесты CI и повторный полный FEM в браузере ещё не подтверждены. Пользователю следует перезагрузить страницу с новым cache-busting URL и загрузить тот же JSON. Если после этого FEM выдаёт иную ошибку, исследовать её отдельно. Замороженную 2D не менять.
+
+## 2026-11-05: browser cache diagnosis
+Repeated old contacts error steel/insulation, steel/support, steel/bottomCap although source now expects normalized names and bottomCap/support. In fem-lab.html visible build marker 20261105-contacts-cachefix-1 and version query on local JS files added (commit 381cd46). If marker missing, Pages HTML is stale; if marker visible but old contacts remain, inspect deployed JS. No browser validation confirmed. Keep 2D frozen.
