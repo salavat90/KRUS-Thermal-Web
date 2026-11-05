@@ -33,15 +33,60 @@ function build(){
  add('Корпус',shape(0),0x7d95a8,1,[0,0,0],rot);
  if(pre>0&&$('showPre').checked)add('Предизоляция',shape(pre),0xe7bb76,.40,[0,0,0],rot);
  if(ins>0&&$('showIns').checked)add('Основная изоляция',shape(pre+ins),0x64b4dd,.20,[0,0,0],rot);
- const outer=R+pre+ins,base=box?L/2:vertical?L/2+(bottom==='hemisphere'?R:bottom==='shallow'?R*.35:0):outer;
- const support=$('support').value;
- if(support==='legs'||support==='saddle'){
-  for(let j=0;j<n;j++){let x,z;if(horizontal){x=n===1?0:(j/(n-1)-.5)*L*.8;z=0}else{let a=2*Math.PI*j/Math.max(n,1);x=(outer*.82)*Math.cos(a);z=(outer*.82)*Math.sin(a)}
-   const y=-(vertical||box?base:outer)-sh/2;
-   add('Опора '+(j+1),new THREE.BoxGeometry(horizontal?.18:.12,sh,horizontal?outer*.8:.12),0x697d90,1,[x,y,z]);
+ // Supports are attached to the STRUCTURAL vessel shell, not the outside of insulation.
+ const support=$('support').value,overlap=.035;
+ const capDepth=bottom==='hemisphere'?R:bottom==='shallow'?R*.35:0;
+ const bottomAtRadius=rad=>{
+  if(box||horizontal)return -L/2;
+  const u=Math.min(1,Math.max(0,rad/R));
+  const drop=bottom==='hemisphere'?Math.sqrt(Math.max(0,R*R-rad*rad)):capDepth*(1-u*u);
+  return -L/2-drop;
+ };
+ const structuralBottom=box?-L/2:horizontal?-R:-L/2-capDepth;
+ function post(name,x,z,contactY,width=.13){
+  const top=contactY+overlap,foot=structuralBottom-sh;
+  const height=top-foot;
+  if(height<=0)throw Error('Высота опоры должна быть больше перепада днища');
+  add(name,new THREE.BoxGeometry(width,height,width),0x697d90,1,[x,(top+foot)/2,z]);
+ }
+ if(support==='legs'){
+  for(let j=0;j<n;j++){
+   let x,z,contact;
+   if(box){
+    // Place supports along the rectangle perimeter; corners work for any count.
+    const theta=2*Math.PI*j/Math.max(1,n),cx=Math.cos(theta),cz=Math.sin(theta);
+    const factor=1/Math.max(Math.abs(cx),Math.abs(cz),1e-9);
+    x=cx*factor*(d/2-.10);z=cz*factor*(depth/2-.10);contact=-L/2;
+   }else if(horizontal){
+    x=n===1?0:(j/(n-1)-.5)*L*.78;z=0;contact=-R;
+   }else{
+    const angle=2*Math.PI*j/Math.max(1,n),rad=R*.72;
+    x=rad*Math.cos(angle);z=rad*Math.sin(angle);contact=bottomAtRadius(rad);
+   }
+   post('Опора '+(j+1),x,z,contact);
   }
- }else if(support==='skirt'){add('Опорная юбка',new THREE.CylinderGeometry(outer*.83,outer*.83,sh,seg,1,true),0x70869b,.8,[0,-base-sh/2,0])}
- else if(support==='foundation')add('Основание',new THREE.BoxGeometry(d*1.4,Math.max(.1,sh),box?depth*1.4:d*1.4),0x8a9ba7,1,[0,-base-sh/2,0]);
+ }else if(support==='saddle'){
+  if(horizontal){
+   for(let j=0;j<n;j++){
+    const x=n===1?0:(j/(n-1)-.5)*L*.78;
+    // Two contact posts follow the underside of the cylindrical shell.
+    const z=R*.55,contact=-Math.sqrt(R*R-z*z);
+    post('Седло '+(j+1)+' левая стойка',x,-z,contact,.16);
+    post('Седло '+(j+1)+' правая стойка',x,z,contact,.16);
+    const foot=structuralBottom-sh;
+    add('Седло '+(j+1)+' основание',new THREE.BoxGeometry(.28,.12,2*z+.28),0x697d90,1,[x,foot+.06,0]);
+   }
+  }else{
+   for(let j=0;j<n;j++){const angle=2*Math.PI*j/Math.max(1,n),rad=R*.72;post('Опора '+(j+1),rad*Math.cos(angle),rad*Math.sin(angle),bottomAtRadius(rad),.22)}
+  }
+ }else if(support==='skirt'){
+  const rad=box?Math.min(d,depth)*.32:R*.72,contact=box?-L/2:horizontal?-R:bottomAtRadius(rad);
+  const foot=structuralBottom-sh,top=contact+overlap;
+  add('Опорная юбка',new THREE.CylinderGeometry(rad,rad,top-foot,seg,1,true),0x70869b,.8,[0,(top+foot)/2,0]);
+ }else if(support==='foundation'){
+  const foot=structuralBottom-sh,top=structuralBottom+overlap;
+  add('Основание',new THREE.BoxGeometry(d*1.4,top-foot,box?depth*1.4:d*1.4),0x8a9ba7,1,[0,(top+foot)/2,0]);
+ }
  maxDim=Math.max(L+2*R,d+2*pre+2*ins,depth)+sh;
  let triangles=0;group.traverse(o=>{if(o.isMesh)triangles+=o.geometry.index?o.geometry.index.count/3:o.geometry.attributes.position.count/3});
  $('stats').textContent='Поверхностная сетка: '+Math.round(triangles)+' треугольников\nОпор: '+(support==='none'?0:support==='legs'||support==='saddle'?n:1)+'\nМатериальные поверхности: корпус, предизоляция, изоляция\nОбъёмная тетраэдральная сетка пока не построена.';
