@@ -17,5 +17,28 @@ function run(name,fn){const t=Date.now();try{fn();console.log('PASS',name,Date.n
 run('default closed water conserves power',()=>{let m=calc();assert.ok(Math.abs(m.power-60)<1e-8);assert.ok(Math.abs(m.residual)<0.5,'energy residual '+m.residual);assert.ok(Number.isFinite(m.waterMean));});
 run('higher heater power raises closed-water temperature',()=>{let a=calc();elements.get('pow').value='40';let b=calc();assert.ok(b.waterMean>a.waterMean);elements.get('pow').value='30'});
 run('fixed water temperature boundary is enforced',()=>{elements.get('mode').value='fixed';let m=calc();assert.ok(Math.abs(m.waterMean-5)<.001);assert.ok(Math.abs(m.power+m.product-m.loss)<.5);elements.get('mode').value='closed'});
+run('numerical pipe heat loss vs analytical cylinder (no heater)',()=>{
+  elements.get('mode').value='fixed';
+  elements.get('pow').value='0';
+  elements.get('kc').value=elements.get('ki').value;
+  const m=calc();
+  const d=Number(elements.get('d').value)/1000;
+  const w=Number(elements.get('w').value)/1000;
+  const ins=Number(elements.get('ins').value)/1000;
+  const kPipe=Number(elements.get('kp').value);
+  const kIns=Number(elements.get('ki').value);
+  const h=Number(elements.get('h').value);
+  const ri=d/2-w,ro=d/2,rout=ro+ins;
+  const resistance=Math.log(ro/ri)/(2*Math.PI*kPipe)+Math.log(rout/ro)/(2*Math.PI*kIns)+1/(h*2*Math.PI*rout);
+  const expected=(5-(-45))/resistance;
+  const relativeError=Math.abs(m.loss-expected)/Math.abs(expected);
+  console.log('Analytical q:',expected.toFixed(4),'W/m; numerical q:',m.loss.toFixed(4),'W/m; relative error:',(relativeError*100).toFixed(2)+'%');
+  assert.ok(relativeError<0.15,'numerical/analytical heat loss mismatch: '+(relativeError*100).toFixed(2)+'%');
+  assert.ok(Math.abs(m.power)<1e-10);
+  assert.ok(Math.abs(m.product-m.loss)<.5,'fixed-temperature energy balance');
+  elements.get('pow').value='30';
+  elements.get('kc').value='.25';
+  elements.get('mode').value='closed';
+});
 run('invalid insulation rejected',()=>{elements.get('ins').value='0';assert.throws(calc);elements.get('ins').value='45'});
 console.log('Note: ELCUT 15-case comparisons remain BLOCKED until matching geometry and boundary conditions are known.');
