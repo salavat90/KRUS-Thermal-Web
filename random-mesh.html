@@ -5,7 +5,7 @@ function build(){
  if(!window.d3?.Delaunay)throw Error('Не загружена библиотека триангуляции. Проверьте доступ к jsDelivr.');
  const val=id=>Number($(id).value),p={n:val('count'),d:val('d'),wall:val('wall'),ins:val('ins'),cd:val('cd'),cables:val('cables'),bias:val('bias'),seed:val('seed')};
  if(!Number.isInteger(p.n)||p.n<500||p.n>50000||!(p.d>2*p.wall&&p.wall>0&&p.ins>0&&p.cd>0&&p.bias>=1&&p.cables>=1&&p.cables<=3))throw Error('Проверьте входные параметры');
- const random=rng(p.seed),ro=p.d/2,R=ro+p.ins,ri=ro-p.wall;
+ const random=rng(p.seed),ro=p.d/2,R=ro+p.ins,ri=ro-p.wall,scale=Math.max(p.cd,1);
  const centers=Array.from({length:p.cables},(_,j)=>{let a=(135+j*60-90)*Math.PI/180,r=ro+p.cd/2;return [r*Math.cos(a),r*Math.sin(a)]});
  const pts=[],tags=[],push=(x,y,tag)=>{pts.push([x,y]);tags.push(tag)};
  // Mandatory boundary points: remain geometrically distinct, no duplicate center.
