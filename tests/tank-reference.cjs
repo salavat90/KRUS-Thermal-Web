@@ -1,0 +1,8 @@
+const assert=require('node:assert/strict'),{calculateTankReference:f}=require('../3d/reference-heat.js');
+const p={diameter:2000,height:3500,wall:8,insulation:100,lambdaSteel:45,lambdaInsulation:.04,hOutside:12,tProduct:80,tAmbient:-40,supportCount:4,supportArea:.005,supportLength:.45,lambdaSupport:45,fill:30};
+const a=f(p),b=f({...p,supportCount:0}),c=f({...p,insulation:200}),d=f({...p,tProduct:p.tAmbient});
+assert.ok(a.qSupports>0&&a.qTotal>b.qTotal);
+assert.ok(c.qShell<a.qShell);
+assert.ok(Math.abs(d.qTotal)<1e-10);
+assert.ok(Math.abs(a.qTotal-a.qShell-a.qCaps-a.qSupports)<1e-8);
+console.log('PASS analytical tank reference',JSON.stringify({shell:a.qShell,caps:a.qCaps,supports:a.qSupports,total:a.qTotal}));
