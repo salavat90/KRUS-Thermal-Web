@@ -1,0 +1,55 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС-Thermal 3D — геометрия ёмкостей</title><style>body{margin:0;background:#111d30;color:#e9f3ff;font:14px system-ui}header,aside,section{background:#1c304b;padding:14px}header a{color:#91d1ff}main{display:grid;grid-template-columns:310px 1fr;gap:12px;padding:12px}aside{border-radius:8px}label{display:block;margin:9px 0 4px;font-size:12px}input,select{width:100%;box-sizing:border-box;padding:8px;background:#2b4563;color:white;border:1px solid #5b7391;border-radius:4px}button{padding:9px 12px;background:#287fba;color:white;border:0;border-radius:5px;cursor:pointer;margin:10px 5px 0 0}canvas{width:100%;height:72vh;display:block;background:#eef3f8;touch-action:none}.note{font-size:12px;color:#bdd0e2}#stats{white-space:pre-line;line-height:1.6}@media(max-width:800px){main{grid-template-columns:1fr}canvas{height:50vh}}</style><header><b>КРУС-Thermal 3D · Геометрия ёмкостей</b>　<a href="../random-mesh.html">2D для тестирования</a></header><main><aside><label>Тип ёмкости</label><select id="kind"><option value="vertical">Вертикальная цилиндрическая</option><option value="horizontal">Горизонтальная цилиндрическая</option><option value="box">Прямоугольная</option></select><label>Диаметр / ширина, мм</label><input id="d" type="number" value="2000"><label>Высота / длина, мм</label><input id="length" type="number" value="3500"><label>Глубина прямоугольной ёмкости, мм</label><input id="depth" type="number" value="1500"><label>Стенка, мм</label><input id="wall" type="number" value="8"><label>Предизоляция, мм</label><input id="pre" type="number" value="20"><label>Основная изоляция, мм</label><input id="ins" type="number" value="100"><label>Верхнее / левое днище</label><select id="top"><option value="flat">Плоское</option><option value="hemisphere">Полусферическое</option><option value="shallow">Сферический сегмент</option></select><label>Нижнее / правое днище</label><select id="bottom"><option value="flat">Плоское</option><option value="hemisphere">Полусферическое</option><option value="shallow">Сферический сегмент</option></select><label>Тип опор</label><select id="support"><option value="legs">Ножки</option><option value="skirt">Опорная юбка</option><option value="saddle">Седловые</option><option value="foundation">Основание</option><option value="none">Без опор</option></select><label>Количество опор</label><input id="supports" type="number" min="0" max="32" value="4"><label>Высота опор, мм</label><input id="supportHeight" type="number" value="450"><label>Плотность поверхностной сетки (сегментов)</label><input id="segments" type="number" min="12" max="128" value="48"><label><input id="mesh" type="checkbox" checked style="width:auto"> Показывать треугольную сетку</label><label><input id="showPre" type="checkbox" checked style="width:auto"> Показывать предизоляцию</label><label><input id="showIns" type="checkbox" checked style="width:auto"> Показывать изоляцию</label><button id="build">Построить</button><button id="fit">Вписать</button><p class="note">Вращение — левая кнопка; перемещение — правая; колесо — масштаб. Сетка пока поверхностная, не объёмная FEM.</p></aside><section><div id="state">Загрузка геометрического движка…</div><canvas id="view"></canvas><div id="stats"></div></section></main><script>window.addEventListener('error',e=>document.getElementById('state').textContent='Ошибка: '+e.message);window.addEventListener('unhandledrejection',e=>document.getElementById('state').textContent='Ошибка: '+(e.reason?.message||e.reason));</script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script><script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const $=id=>document.getElementById(id),canvas=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color(0xeef3f8);
+const camera=new THREE.PerspectiveCamera(42,1,.01,1000),renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x7b91a5,2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(5,8,6);scene.add(light);
+const group=new THREE.Group();scene.add(group);let maxDim=4;
+const v=id=>Number($(id).value),material=(color,opacity)=>new THREE.MeshStandardMaterial({color,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity===1,roughness:.7});
+function add(name,geometry,color,opacity=1,position=[0,0,0],rotation=[0,0,0]){
+ const m=new THREE.Mesh(geometry,material(color,opacity));m.name=name;m.position.set(...position);m.rotation.set(...rotation);group.add(m);
+ if($('mesh').checked){const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geometry,25),new THREE.LineBasicMaterial({color:0x2e536d,transparent:true,opacity:.35}));m.add(edges)}return m;
+}
+function clear(){for(const o of [...group.children]){group.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material){if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material.dispose()}})}}
+function profile(radius,length,top,bottom,segments){
+ const pts=[],R=radius,H=length/2;function cap(which,sign){
+  const n=which==='flat'?1:16,depth=which==='hemisphere'?R:which==='shallow'?R*.35:0;
+  if(which==='flat'){pts.push(new THREE.Vector2(0,sign*H));pts.push(new THREE.Vector2(R,sign*H));return}
+  for(let i=0;i<=n;i++){const u=i/n,rr=R*u,drop=which==='hemisphere'?Math.sqrt(Math.max(0,R*R-rr*rr)):depth*(1-u*u);pts.push(new THREE.Vector2(rr,sign*(H+drop)))}
+ }
+ cap(bottom,-1);pts.push(new THREE.Vector2(R,-H));pts.push(new THREE.Vector2(R,H));
+ if(top==='flat'){pts.push(new THREE.Vector2(0,H))}else{
+  const depth=top==='hemisphere'?R:R*.35;
+  for(let i=15;i>=0;i--){const u=i/16,rr=R*u,drop=top==='hemisphere'?Math.sqrt(Math.max(0,R*R-rr*rr)):depth*(1-u*u);pts.push(new THREE.Vector2(rr,H+drop))}
+ }
+ return new THREE.LatheGeometry(pts,segments);
+}
+function build(){
+ const kind=$('kind').value,d=v('d')/1000,L=v('length')/1000,depth=v('depth')/1000,wall=v('wall')/1000,pre=v('pre')/1000,ins=v('ins')/1000,n=v('supports'),sh=v('supportHeight')/1000,seg=v('segments');
+ if(![d,L,depth,wall,pre,ins,n,sh,seg].every(Number.isFinite)||d<=2*wall||L<=0||depth<=0||pre<0||ins<0||n<0||n>32||seg<12||seg>128)throw Error('Проверьте геометрические параметры');
+ clear();const vertical=kind==='vertical',horizontal=kind==='horizontal',box=kind==='box',rot=horizontal?[0,0,Math.PI/2]:[0,0,0];
+ const top=$('top').value,bottom=$('bottom').value,R=d/2;
+ const shape=(offset)=>box?new THREE.BoxGeometry(d+2*offset,L+2*offset,depth+2*offset,Math.max(1,Math.round(seg/8)),Math.max(1,Math.round(seg/8)),Math.max(1,Math.round(seg/8))):profile(R+offset,L,top,bottom,seg);
+ add('Корпус',shape(0),0x7d95a8,1,[0,0,0],rot);
+ if(pre>0&&$('showPre').checked)add('Предизоляция',shape(pre),0xe7bb76,.40,[0,0,0],rot);
+ if(ins>0&&$('showIns').checked)add('Основная изоляция',shape(pre+ins),0x64b4dd,.20,[0,0,0],rot);
+ const outer=R+pre+ins,base=box?L/2:vertical?L/2+(bottom==='hemisphere'?R:bottom==='shallow'?R*.35:0):outer;
+ const support=$('support').value;
+ if(support==='legs'||support==='saddle'){
+  for(let j=0;j<n;j++){let x,z;if(horizontal){x=n===1?0:(j/(n-1)-.5)*L*.8;z=0}else{let a=2*Math.PI*j/Math.max(n,1);x=(outer*.82)*Math.cos(a);z=(outer*.82)*Math.sin(a)}
+   const y=-(vertical||box?base:outer)-sh/2;
+   add('Опора '+(j+1),new THREE.BoxGeometry(horizontal?.18:.12,sh,horizontal?outer*.8:.12),0x697d90,1,[x,y,z]);
+  }
+ }else if(support==='skirt'){add('Опорная юбка',new THREE.CylinderGeometry(outer*.83,outer*.83,sh,seg,1,true),0x70869b,.8,[0,-base-sh/2,0])}
+ else if(support==='foundation')add('Основание',new THREE.BoxGeometry(d*1.4,Math.max(.1,sh),box?depth*1.4:d*1.4),0x8a9ba7,1,[0,-base-sh/2,0]);
+ maxDim=Math.max(L+2*R,d+2*pre+2*ins,depth)+sh;
+ let triangles=0;group.traverse(o=>{if(o.isMesh)triangles+=o.geometry.index?o.geometry.index.count/3:o.geometry.attributes.position.count/3});
+ $('stats').textContent='Поверхностная сетка: '+Math.round(triangles)+' треугольников\nОпор: '+(support==='none'?0:support==='legs'||support==='saddle'?n:1)+'\nМатериальные поверхности: корпус, предизоляция, изоляция\nОбъёмная тетраэдральная сетка пока не построена.';
+ $('state').textContent='Геометрия построена. Тепловой расчёт не выполняется.';
+}
+function fit(){const s=maxDim;camera.position.set(s*.95,s*.7,s*1.05);controls.target.set(0,0,0);controls.update()}
+function resize(){let w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+$('build').onclick=()=>{try{build();fit()}catch(e){$('state').textContent=e.message}};
+$('fit').onclick=fit;
+const obs=new ResizeObserver(resize);obs.observe(canvas);resize();build();fit();function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)}frame();
+</script>
