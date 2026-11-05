@@ -4,6 +4,8 @@ on:
     paths:
       - '3d/annulus-tetra.js'
       - '3d/layered-tetra.js'
+      - '3d/random-points.js'
+      - 'tests/tank-random-points.cjs'
       - 'tests/tank-layered-tetra.cjs'
       - 'tests/tank-tetra.cjs'
       - '.github/workflows/tank-mesh.yml'
@@ -20,3 +22,4 @@ jobs:
         run: |
           node tests/tank-tetra.cjs
           node tests/tank-layered-tetra.cjs
+          node tests/tank-random-points.cjs
