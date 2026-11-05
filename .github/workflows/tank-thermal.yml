@@ -7,6 +7,8 @@ on:
       - '3d/attachments-heat.js'
       - '3d/unified-fem.js'
       - '3d/fem-interface-audit.js'
+      - '3d/full-vessel-contract.js'
+      - 'tests/tank-full-vessel-contract.cjs'
       - 'tests/tank-interface-audit.cjs'
       - 'tests/tank-unified-fem.cjs'
       - '3d/fem-lab.html'
@@ -34,3 +36,4 @@ jobs:
           node tests/tank-unified-fem.cjs
           node tests/tank-primary-ui.cjs
           node tests/tank-interface-audit.cjs
+          node tests/tank-full-vessel-contract.cjs
