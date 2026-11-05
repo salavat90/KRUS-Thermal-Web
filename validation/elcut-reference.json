@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 1,
+  "source": "Из моделей Elcut.zip / Цифры и модели.xlsx",
+  "notes": "Nominal diameter is not necessarily actual outside diameter. Heater power values copied as labeled in source. No calculated KRUS results are asserted.",
+  "cases": [
+    {
+      "id": "C001",
+      "nominalDiameterMm": 50,
+      "insulationMm": 20,
+      "ambientMinC": -30,
+      "alphaWm2K": 55,
+      "requiredC": 20,
+      "insulationLambda": 0.035,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 10.88,
+      "elcut": {
+        "circulating": {
+          "productC": 80,
+          "cableC": 93
+        },
+        "thermalBalance": {
+          "productC": 56,
+          "cableC": 73
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "C002",
+      "nominalDiameterMm": 50,
+      "insulationMm": 100,
+      "ambientMinC": -30,
+      "alphaWm2K": 46.2,
+      "requiredC": 20,
+      "insulationLambda": 0.035,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 4.11,
+      "elcut": {
+        "circulating": {
+          "productC": 150,
+          "cableC": 153
+        },
+        "thermalBalance": {
+          "productC": 75,
+          "cableC": 82
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "E001",
+      "nominalDiameterMm": 200,
+      "insulationMm": 40,
+      "ambientMinC": -40,
+      "alphaWm2K": 45.8,
+      "requiredC": 40,
+      "insulationLambda": 0.036,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 32.93,
+      "elcut": {
+        "circulating": {
+          "productC": 230,
+          "cableC": 263
+        },
+        "thermalBalance": {
+          "productC": 108,
+          "cableC": 165
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "E002",
+      "nominalDiameterMm": 200,
+      "insulationMm": 50,
+      "ambientMinC": -40,
+      "alphaWm2K": 45.2,
+      "requiredC": 200,
+      "insulationLambda": 0.051,
+      "layingCoefficient": 3,
+      "heaterPowerWm": 79.56,
+      "elcut": {
+        "circulating": {
+          "productC": 350,
+          "cableC": 403
+        },
+        "thermalBalance": {
+          "productC": 247,
+          "cableC": 326
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "E003",
+      "nominalDiameterMm": 200,
+      "insulationMm": 80,
+      "ambientMinC": -40,
+      "alphaWm2K": 43.9,
+      "requiredC": 150,
+      "insulationLambda": 0.045,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 78.71,
+      "elcut": {
+        "circulating": {
+          "productC": 170,
+          "cableC": 272
+        },
+        "thermalBalance": {
+          "productC": 247,
+          "cableC": 327
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "H001",
+      "nominalDiameterMm": 400,
+      "insulationMm": 70,
+      "ambientMinC": -50,
+      "alphaWm2K": 41.7,
+      "requiredC": 70,
+      "insulationLambda": 0.037,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 51.01,
+      "elcut": {
+        "circulating": {
+          "productC": 230,
+          "cableC": 276
+        },
+        "thermalBalance": {
+          "productC": 134,
+          "cableC": 206
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "H002",
+      "nominalDiameterMm": 400,
+      "insulationMm": 100,
+      "ambientMinC": -50,
+      "alphaWm2K": 40.9,
+      "requiredC": 150,
+      "insulationLambda": 0.044,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 97.85,
+      "elcut": {
+        "circulating": {
+          "productC": 230,
+          "cableC": 327
+        },
+        "thermalBalance": {
+          "productC": 226,
+          "cableC": 337
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "H003",
+      "nominalDiameterMm": 400,
+      "insulationMm": 50,
+      "ambientMinC": -50,
+      "alphaWm2K": 42.3,
+      "requiredC": 60,
+      "insulationLambda": 0.037,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 79.93,
+      "elcut": {
+        "circulating": {
+          "productC": 150,
+          "cableC": 260
+        },
+        "thermalBalance": {
+          "productC": 146,
+          "cableC": 265
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "0000",
+      "nominalDiameterMm": 150,
+      "insulationMm": 50,
+      "ambientMinC": -40,
+      "alphaWm2K": 46.8,
+      "requiredC": 30,
+      "insulationLambda": 0.035,
+      "layingCoefficient": 1,
+      "heaterPowerWm": 42,
+      "elcut": {
+        "circulating": {
+          "productC": 200,
+          "cableC": 213
+        },
+        "thermalBalance": {
+          "productC": 75,
+          "cableC": 120
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "E004",
+      "nominalDiameterMm": 200,
+      "insulationMm": 120,
+      "ambientMinC": -40,
+      "alphaWm2K": 42.4,
+      "requiredC": 5,
+      "insulationLambda": 0.034,
+      "layingCoefficient": 1,
+      "heaterPowerWm": 15.5,
+      "elcut": {
+        "circulating": {
+          "productC": 170,
+          "cableC": 175
+        },
+        "thermalBalance": {
+          "productC": 59,
+          "cableC": 77
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "F001",
+      "nominalDiameterMm": 250,
+      "insulationMm": 50,
+      "ambientMinC": -45,
+      "alphaWm2K": 44.4,
+      "requiredC": 50,
+      "insulationLambda": 0.036,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 39.5,
+      "elcut": {
+        "circulating": {
+          "productC": 150,
+          "cableC": 180
+        },
+        "thermalBalance": {
+          "productC": 97,
+          "cableC": 145
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "G001",
+      "nominalDiameterMm": 300,
+      "insulationMm": 60,
+      "ambientMinC": -50,
+      "alphaWm2K": 43.4,
+      "requiredC": 60,
+      "insulationLambda": 0.037,
+      "layingCoefficient": 3,
+      "heaterPowerWm": 38,
+      "elcut": {
+        "circulating": {
+          "productC": 80,
+          "cableC": 124
+        },
+        "thermalBalance": {
+          "productC": 115,
+          "cableC": 151
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "D001",
+      "nominalDiameterMm": 100,
+      "insulationMm": 30,
+      "ambientMinC": -35,
+      "alphaWm2K": 50.1,
+      "requiredC": 30,
+      "insulationLambda": 0.036,
+      "layingCoefficient": 2,
+      "heaterPowerWm": 33.5,
+      "elcut": {
+        "circulating": {
+          "productC": 120,
+          "cableC": 125
+        },
+        "thermalBalance": {
+          "productC": 88,
+          "cableC": 100
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "B001",
+      "nominalDiameterMm": 32,
+      "insulationMm": 10,
+      "ambientMinC": -25,
+      "alphaWm2K": 59.6,
+      "requiredC": 5,
+      "insulationLambda": 0.035,
+      "layingCoefficient": 1,
+      "heaterPowerWm": 29.25,
+      "elcut": {
+        "circulating": {
+          "productC": 80,
+          "cableC": 83
+        },
+        "thermalBalance": {
+          "productC": 48,
+          "cableC": 60
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    },
+    {
+      "id": "I002",
+      "nominalDiameterMm": 1400,
+      "insulationMm": 200,
+      "ambientMinC": -5,
+      "alphaWm2K": 32.6,
+      "requiredC": 10,
+      "insulationLambda": 0.036,
+      "layingCoefficient": 1,
+      "heaterPowerWm": 19,
+      "elcut": {
+        "circulating": {
+          "productC": 80,
+          "cableC": 87
+        },
+        "thermalBalance": {
+          "productC": 50,
+          "cableC": 67
+        }
+      },
+      "missing": [
+        "outside diameter and pipe wall",
+        "cable physical diameter and actual placement",
+        "material conductivity and boundary assignments",
+        "exact ELCUT model conditions"
+      ]
+    }
+  ]
+}
