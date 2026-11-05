@@ -5,6 +5,8 @@ on:
       - '3d/annulus-tetra.js'
       - '3d/layered-tetra.js'
       - '3d/random-points.js'
+      - '3d/unified-tank-mesh.js'
+      - 'tests/tank-unified-mesh.cjs'
       - 'tests/tank-random-points.cjs'
       - 'tests/tank-layered-tetra.cjs'
       - 'tests/tank-tetra.cjs'
@@ -23,3 +25,4 @@ jobs:
           node tests/tank-tetra.cjs
           node tests/tank-layered-tetra.cjs
           node tests/tank-random-points.cjs
+          node tests/tank-unified-mesh.cjs
