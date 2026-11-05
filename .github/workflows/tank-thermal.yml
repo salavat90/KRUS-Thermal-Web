@@ -10,6 +10,7 @@ on:
       - '3d/full-vessel-contract.js'
       - '3d/full-vessel-fem.js'
       - 'tests/tank-full-fem.cjs'
+      - 'tests/tank-full-contact-regression.cjs'
       - 'tests/tank-full-vessel-contract.cjs'
       - 'tests/tank-interface-audit.cjs'
       - 'tests/tank-unified-fem.cjs'
@@ -40,3 +41,4 @@ jobs:
           node tests/tank-interface-audit.cjs
           node tests/tank-full-vessel-contract.cjs
           node tests/tank-full-fem.cjs
+          node tests/tank-full-contact-regression.cjs
