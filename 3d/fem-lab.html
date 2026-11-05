@@ -169,7 +169,7 @@ sliceCanvas.addEventListener('pointerup',e=>{if(!sliceDrag)return;const moved=sl
 $('slicePlane').onchange=updateSliceRange;$('sliceOffset').oninput=renderSlice;
 $('sliceMesh').onchange=renderSlice;$('slicePoints').onchange=renderSlice;
 $('sliceFit').onclick=()=>{sliceView={zoom:1,dx:0,dy:0};renderSlice()};
-$('sliceSupport').onclick=()=>{if(!result)return;const support=[];for(let q=0;q<result.mesh.tets.length;q++)if(result.mesh.regions?.[q]==='support')for(const id of result.mesh.tets[q])support.push(result.mesh.pts[id]);if(!support.length){$('sliceProbe').textContent='В FEM-сетке отсутствуют опоры';return}const z=(Math.min(...support.map(p=>p[2]))+Math.max(...support.map(p=>p[2])))/2;$('slicePlane').value='XY';updateSliceRange();const slider=$('sliceOffset');slider.value=Math.max(Number(slider.min),Math.min(Number(slider.max),Math.round(z*1000)));renderSlice()};
+$('sliceSupport').onclick=()=>{if(!result)return;const q=result.mesh.regions?.findIndex(v=>v==='support')??-1;if(q<0){$('sliceProbe').textContent='В FEM-сетке отсутствуют опоры';return}const tet=result.mesh.tets[q],z=tet.reduce((sum,id)=>sum+result.mesh.pts[id][2],0)/4;$('slicePlane').value='XY';updateSliceRange();const slider=$('sliceOffset');slider.value=Math.max(Number(slider.min),Math.min(Number(slider.max),Math.round(z*1000)));renderSlice()};
 new ResizeObserver(renderSlice).observe(sliceCanvas);
 function run(){try{
  const p={};for(const id of ['diameter','height','wall','insulation','lambdaSteel','lambdaInsulation','tProduct','tAmbient','hOutside','metalPoints','insulationPoints','seed'])p[id]=Number($(id).value);
