@@ -1,0 +1,71 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС-Thermal 3D — ёмкости</title>
+<style>body{margin:0;background:#101b2d;color:#edf4ff;font:14px system-ui}header{padding:15px 20px;background:#1d2e47}a{color:#8cd0ff}main{display:grid;grid-template-columns:295px 1fr;gap:12px;padding:12px}aside,.stage{background:#1d2e47;border-radius:9px;padding:14px}label{display:block;margin-top:10px;font-size:12px;color:#b6cde3}input,select{width:100%;box-sizing:border-box;padding:8px;background:#2c4563;color:#fff;border:1px solid #5a7290;border-radius:5px}button{border:0;background:#287db7;color:#fff;border-radius:5px;padding:9px 12px;margin:8px 4px 0 0;cursor:pointer}button:disabled{opacity:.5}canvas{width:100%;height:68vh;display:block;border-radius:7px;background:#eef4fa;touch-action:none}.info{white-space:pre-line;line-height:1.6}.note{font-size:12px;color:#b9cce0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}@media(max-width:800px){main{grid-template-columns:1fr}canvas{height:50vh}}</style>
+<header><b>КРУС-Thermal 3D · Ёмкости</b>　<a href="../random-mesh.html">2D для тестирования</a></header>
+<main><aside><b>Геометрия вертикальной ёмкости</b>
+<label>Диаметр корпуса, мм</label><input id="diam" type="number" value="2000" min="100">
+<label>Высота цилиндрической части, мм</label><input id="height" type="number" value="3500" min="100">
+<label>Толщина стенки, мм</label><input id="wall" type="number" value="8" min="1">
+<label>Толщина предизоляции, мм</label><input id="pre" type="number" value="20" min="0">
+<label>Толщина основной изоляции, мм</label><input id="ins" type="number" value="100" min="0">
+<label>Материал корпуса</label><select id="material"><option>Углеродистая сталь</option><option>Нержавеющая сталь</option></select>
+<label>Нагреватели на обечайке</label><input id="heaters" type="number" min="0" max="12" value="4">
+<label>Мощность одного нагревателя, Вт/м</label><input id="power" type="number" min="0" value="30">
+<div class="pair"><div><label>Крышка</label><select id="lid"><option value="flat">Плоская</option><option value="none">Без крышки</option></select></div><div><label>Днище</label><select id="bottom"><option value="flat">Плоское</option><option value="none">Без днища</option></select></div></div>
+<button id="build">Обновить 3D</button><button id="reset">Сбросить камеру</button>
+<label><input id="shell" type="checkbox" checked style="width:auto"> Основная изоляция</label>
+<label><input id="preShow" type="checkbox" checked style="width:auto"> Предизоляция</label>
+<label><input id="heaterShow" type="checkbox" checked style="width:auto"> Нагреватели</label>
+<p class="note">Поворот — левая кнопка мыши; перемещение — правая; колесо — масштаб. Нажмите на элемент, чтобы увидеть его свойства.</p>
+<p class="note">Это геометрический 3D-редактор первой очереди. Температурное поле и 3D FEM пока не реализованы. Крышка и днище пока плоские, нагреватели — геометрические траектории без теплового расчёта.</p></aside>
+<section class="stage"><div id="state">Загрузка 3D-движка…</div><canvas id="view"></canvas><div id="info" class="info"></div></section></main>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
+import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+const $=id=>document.getElementById(id),canvas=$('view');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xeef4fa);
+const camera=new THREE.PerspectiveCamera(40,1,.01,1000);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x77899d,2.1));
+const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(5,8,7);scene.add(light);
+const group=new THREE.Group();scene.add(group);const pickable=[];
+const mat=(color,opacity=1)=>new THREE.MeshStandardMaterial({color,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity>=1,roughness:.65});
+function addCylinder(name,radius,height,color,opacity=1){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,96,1,true),mat(color,opacity));mesh.name=name;group.add(mesh);pickable.push(mesh);return mesh}
+function addDisk(name,radius,y,color){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,.012,96),mat(color));mesh.position.y=y;mesh.name=name;group.add(mesh);pickable.push(mesh)}
+function clear(){for(const child of [...group.children]){group.remove(child);child.geometry?.dispose();if(Array.isArray(child.material))child.material.forEach(m=>m.dispose());else child.material?.dispose()}pickable.length=0}
+function val(id){return Number($(id).value)}
+let data=null;
+function build(){
+ const d=val('diam'),h=val('height'),wall=val('wall'),pre=val('pre'),ins=val('ins'),heaters=val('heaters'),power=val('power');
+ if(![d,h,wall,pre,ins,heaters,power].every(Number.isFinite)||d<=2*wall||wall<=0||h<=0||pre<0||ins<0||heaters<0||heaters>12||power<0)throw Error('Некорректные параметры геометрии');
+ clear();const scale=1/1000,r=d/2000,H=h/1000,rPre=r+pre/1000,rIns=rPre+ins/1000;
+ addCylinder('Корпус ёмкости',r,H,0x879aaa);
+ if($('lid').value==='flat')addDisk('Крышка',r,H/2,0x6c879b);
+ if($('bottom').value==='flat')addDisk('Днище',r,-H/2,0x6c879b);
+ if(pre>0&&$('preShow').checked)addCylinder('Предизоляция',rPre,H,0xf2c980,.47);
+ if(ins>0&&$('shell').checked)addCylinder('Основная изоляция',rIns,H,0x72b7dc,.18);
+ if($('heaterShow').checked&&heaters>0){
+  const turns=3;
+  for(let j=0;j<heaters;j++){
+   const pts=[],segments=240;
+   for(let i=0;i<=segments;i++){const u=i/segments,a=2*Math.PI*(j/heaters+turns*u),y=-H/2+H*u,rad=rPre+.009;pts.push(new THREE.Vector3(rad*Math.cos(a),y,rad*Math.sin(a)))}
+   const geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),360,.008,6,false);
+   const cable=new THREE.Mesh(geometry,mat(0xe46c35));cable.name='Нагреватель '+(j+1);group.add(cable);pickable.push(cable);
+  }
+ }
+ const volume=Math.PI*Math.pow((d-2*wall)/2000,2)*H;
+ data={d,h,wall,pre,ins,heaters,power,volume};
+ $('info').textContent='Внутренний объём цилиндрической части: '+volume.toFixed(3)+' м³\nНаружная площадь обечайки: '+(2*Math.PI*r*H).toFixed(3)+' м²\nНагревателей: '+heaters+' · материал: '+$('material').value;
+ $('state').textContent='3D-геометрия построена. Это ещё не тепловой расчёт.';
+}
+function resetCamera(){let R=Math.max(val('diam')/1000,val('height')/1000,1);camera.position.set(R*1.7,R*1.2,R*1.8);controls.target.set(0,0,0);controls.update()}
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
+canvas.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});
+canvas.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>5)return;const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(pickable,false)[0];if(hit)$('state').textContent='Выбран объект: '+hit.object.name;down=null});
+$('build').onclick=()=>{try{build()}catch(e){$('state').textContent='Ошибка: '+e.message}};
+$('reset').onclick=resetCamera;
+for(const id of ['shell','preShow','heaterShow','lid','bottom'])$(id).addEventListener('change',()=>{try{build()}catch(e){$('state').textContent=e.message}});
+const observer=new ResizeObserver(resize);observer.observe(canvas);resize();resetCamera();build();
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+</script>
