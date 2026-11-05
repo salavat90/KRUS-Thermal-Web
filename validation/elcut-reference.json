@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": "Из моделей Elcut.zip / Цифры и модели.xlsx",
-  "notes": "Nominal diameter is not necessarily actual outside diameter. Heater power values copied as labeled in source. No calculated KRUS results are asserted.",
+  "notes": "All 15 rows transcribed from supplied workbook. Nominal diameter is not outside diameter. Heat-loss reference is independent from cable output. No automatic KRUS numerical comparison until physical inputs are complete.",
   "cases": [
     {
       "id": "C001",
@@ -11,6 +11,7 @@
       "alphaWm2K": 55,
       "requiredC": 20,
       "insulationLambda": 0.035,
+      "heatLossReferenceWm": 21.3,
       "layingCoefficient": 2,
       "heaterPowerWm": 10.88,
       "elcut": {
@@ -24,10 +25,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -38,6 +39,7 @@
       "alphaWm2K": 46.2,
       "requiredC": 20,
       "insulationLambda": 0.035,
+      "heatLossReferenceWm": 7.5,
       "layingCoefficient": 2,
       "heaterPowerWm": 4.11,
       "elcut": {
@@ -51,10 +53,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -65,6 +67,7 @@
       "alphaWm2K": 45.8,
       "requiredC": 40,
       "insulationLambda": 0.036,
+      "heatLossReferenceWm": 57.2,
       "layingCoefficient": 2,
       "heaterPowerWm": 32.93,
       "elcut": {
@@ -78,10 +81,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -92,6 +95,7 @@
       "alphaWm2K": 45.2,
       "requiredC": 200,
       "insulationLambda": 0.051,
+      "heatLossReferenceWm": 238.68,
       "layingCoefficient": 3,
       "heaterPowerWm": 79.56,
       "elcut": {
@@ -105,10 +109,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -119,6 +123,7 @@
       "alphaWm2K": 43.9,
       "requiredC": 150,
       "insulationLambda": 0.045,
+      "heatLossReferenceWm": 116.4,
       "layingCoefficient": 2,
       "heaterPowerWm": 78.71,
       "elcut": {
@@ -132,10 +137,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -146,6 +151,7 @@
       "alphaWm2K": 41.7,
       "requiredC": 70,
       "insulationLambda": 0.037,
+      "heatLossReferenceWm": 94.3,
       "layingCoefficient": 2,
       "heaterPowerWm": 51.01,
       "elcut": {
@@ -159,10 +165,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -173,6 +179,7 @@
       "alphaWm2K": 40.9,
       "requiredC": 150,
       "insulationLambda": 0.044,
+      "heatLossReferenceWm": 165.24,
       "layingCoefficient": 2,
       "heaterPowerWm": 97.85,
       "elcut": {
@@ -186,10 +193,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -200,6 +207,7 @@
       "alphaWm2K": 42.3,
       "requiredC": 60,
       "insulationLambda": 0.037,
+      "heatLossReferenceWm": 113.7,
       "layingCoefficient": 2,
       "heaterPowerWm": 79.93,
       "elcut": {
@@ -213,10 +221,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -227,6 +235,7 @@
       "alphaWm2K": 46.8,
       "requiredC": 30,
       "insulationLambda": 0.035,
+      "heatLossReferenceWm": 32.9,
       "layingCoefficient": 1,
       "heaterPowerWm": 42,
       "elcut": {
@@ -240,10 +249,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -254,6 +263,7 @@
       "alphaWm2K": 42.4,
       "requiredC": 5,
       "insulationLambda": 0.034,
+      "heatLossReferenceWm": 12.8,
       "layingCoefficient": 1,
       "heaterPowerWm": 15.5,
       "elcut": {
@@ -267,10 +277,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -281,6 +291,7 @@
       "alphaWm2K": 44.4,
       "requiredC": 50,
       "insulationLambda": 0.036,
+      "heatLossReferenceWm": 68.6,
       "layingCoefficient": 2,
       "heaterPowerWm": 39.5,
       "elcut": {
@@ -294,10 +305,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -308,6 +319,7 @@
       "alphaWm2K": 43.4,
       "requiredC": 60,
       "insulationLambda": 0.037,
+      "heatLossReferenceWm": 79.6,
       "layingCoefficient": 3,
       "heaterPowerWm": 38,
       "elcut": {
@@ -321,10 +333,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -335,6 +347,7 @@
       "alphaWm2K": 50.1,
       "requiredC": 30,
       "insulationLambda": 0.036,
+      "heatLossReferenceWm": 33.9,
       "layingCoefficient": 2,
       "heaterPowerWm": 33.5,
       "elcut": {
@@ -348,10 +361,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -362,6 +375,7 @@
       "alphaWm2K": 59.6,
       "requiredC": 5,
       "insulationLambda": 0.035,
+      "heatLossReferenceWm": 16.1,
       "layingCoefficient": 1,
       "heaterPowerWm": 29.25,
       "elcut": {
@@ -375,10 +389,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     },
     {
@@ -389,6 +403,7 @@
       "alphaWm2K": 32.6,
       "requiredC": 10,
       "insulationLambda": 0.036,
+      "heatLossReferenceWm": 12,
       "layingCoefficient": 1,
       "heaterPowerWm": 19,
       "elcut": {
@@ -402,10 +417,10 @@
         }
       },
       "missing": [
-        "outside diameter and pipe wall",
-        "cable physical diameter and actual placement",
-        "material conductivity and boundary assignments",
-        "exact ELCUT model conditions"
+        "actual pipe outside diameter and wall thickness",
+        "cable cross-section and exact placement",
+        "boundary conditions for each ELCUT mode",
+        "contact resistance and material details"
       ]
     }
   ]
