@@ -85,7 +85,7 @@ function solveTankTetra(opts){
  if(it===8000)throw Error('PCG did not converge');
  let qOut=0;for(const {face,A} of boundary)qOut+=h*A*(face.reduce((s,i)=>s+x[i],0)/3-Ta);
  let qIn=0;for(let i=0;i<n;i++)if(fixed[i]){let f=diag[i]*x[i]-rhs[i];for(const [j,a] of rows[i])f+=a*x[j];qIn+=f}
- const min=Math.min(...x),max=Math.max(...x);
+ let min=Infinity,max=-Infinity;for(const value of x){if(value<min)min=value;if(value>max)max=value;}
  return {mesh,temperature:Array.from(x),qOut,qIn,balance:qIn-qOut,iterations:it,relativeResidual:relative,min,max,minVolume:minVol,outerFaces:boundary.length,freeNodes:free};
 }
 if(typeof module!=='undefined')module.exports={buildRandomizedTetraMesh,solveTankTetra};
