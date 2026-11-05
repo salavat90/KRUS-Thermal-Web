@@ -8,7 +8,7 @@ const group=new THREE.Group();scene.add(group);let maxDim=4;
 const v=id=>Number($(id).value),material=(color,opacity)=>new THREE.MeshStandardMaterial({color,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity===1,roughness:.7});
 function add(name,geometry,color,opacity=1,position=[0,0,0],rotation=[0,0,0]){
  const m=new THREE.Mesh(geometry,material(color,opacity));m.name=name;m.position.set(...position);m.rotation.set(...rotation);group.add(m);
- if($('mesh').checked){const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geometry,25),new THREE.LineBasicMaterial({color:0x2e536d,transparent:true,opacity:.35}));m.add(edges)}return m;
+ if($('mesh').checked){const edges=new THREE.LineSegments(new THREE.WireframeGeometry(geometry),new THREE.LineBasicMaterial({color:0x2e536d,transparent:true,opacity:.35}));m.add(edges)}return m;
 }
 function clear(){for(const o of [...group.children]){group.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material){if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material.dispose()}})}}
 function profile(radius,length,top,bottom,segments){
