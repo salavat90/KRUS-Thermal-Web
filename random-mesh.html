@@ -1,0 +1,45 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС-Thermal — случайная адаптивная триангуляция</title><style>body{margin:0;background:#132139;color:#eaf1fb;font:14px system-ui}header{padding:13px 18px;background:#1e314d}a{color:#90cfff}main{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px}aside{padding:15px;background:#1e314d;border-radius:9px}label{display:block;margin:11px 0 4px;font-size:12px;color:#b9d2e9}input,select{box-sizing:border-box;width:100%;padding:8px;border-radius:5px;border:1px solid #52708d;background:#2b4360;color:white}button{padding:10px 14px;border:0;background:#2684c7;color:white;border-radius:6px;cursor:pointer;margin-top:12px}button:disabled{opacity:.5}canvas{display:block;width:100%;height:72vh;background:#f1f6fc;border-radius:9px}.stats{white-space:pre-line;line-height:1.65;margin-top:12px}.note{color:#b8cce0;font-size:12px;line-height:1.5}@media(max-width:760px){main{grid-template-columns:1fr}canvas{height:52vh}}</style><header><b>КРУС-Thermal · случайная адаптивная сетка</b>　<a href="./">Основная версия</a></header><main><aside><b>Настройки триангуляции</b><label>Количество случайных точек</label><input id="count" type="number" min="500" max="50000" step="500" value="10000"><label>Наружный диаметр трубы, мм</label><input id="d" type="number" value="273"><label>Толщина стенки, мм</label><input id="wall" type="number" value="8"><label>Толщина изоляции, мм</label><input id="ins" type="number" value="45"><label>Диаметр кабеля, мм</label><input id="cd" type="number" value="6"><label>Кабелей</label><select id="cables"><option>1</option><option selected>2</option><option>3</option></select><label>Контраст плотности у кабелей</label><input id="bias" type="number" min="1" max="100" value="25"><label>Случайное зерно (повторяемость)</label><input id="seed" type="number" value="42"><label><input id="showPoints" type="checkbox" checked style="width:auto"> Показывать точки</label><label><input id="showMesh" type="checkbox" checked style="width:auto"> Показывать треугольники</label><button id="run">Построить сетку</button><div class="stats" id="stats">Ожидание…</div><p class="note">Случайные точки распределяются по логарифмически затухающему весу от кабелей. Дополнительные точки фиксируют границы воды, стали и изоляции. Это исследовательская визуализация Delaunay, не FEM-решатель. Геометрия кабелей пока не вырезана как самостоятельная материальная область; пересечение границ треугольниками не исключено.</p></aside><div><canvas id="view"></canvas><p class="note" id="status">Загрузка алгоритма триангуляции…</p></div></main><script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6/dist/d3-delaunay.min.js"></script><script>
+const $=id=>document.getElementById(id),canvas=$('view');let last=null;
+function rng(seed){let x=(seed|0)||1;return ()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967296}}
+function build(){
+ if(!window.d3?.Delaunay)throw Error('Не загружена библиотека триангуляции. Проверьте доступ к jsDelivr.');
+ const val=id=>Number($(id).value),p={n:val('count'),d:val('d'),wall:val('wall'),ins:val('ins'),cd:val('cd'),cables:val('cables'),bias:val('bias'),seed:val('seed')};
+ if(!Number.isInteger(p.n)||p.n<500||p.n>50000||!(p.d>2*p.wall&&p.wall>0&&p.ins>0&&p.cd>0&&p.bias>=1&&p.cables>=1&&p.cables<=3))throw Error('Проверьте входные параметры');
+ const random=rng(p.seed),ro=p.d/2,R=ro+p.ins,ri=ro-p.wall;
+ const centers=Array.from({length:p.cables},(_,j)=>{let a=(135+j*60-90)*Math.PI/180,r=ro+p.cd/2;return [r*Math.cos(a),r*Math.sin(a)]});
+ const pts=[],tags=[],push=(x,y,tag)=>{pts.push([x,y]);tags.push(tag)};
+ // Mandatory boundary points: remain geometrically distinct, no duplicate center.
+ for(const [r,spacing,tag] of [[ri,Math.max(1,p.cd/2),'water-steel'],[ro,Math.max(1,p.cd/2),'steel-insulation'],[R,Math.max(2,p.cd),'outside']]){
+  let n=Math.ceil(2*Math.PI*r/spacing);for(let j=0;j<n;j++){let a=j*2*Math.PI/n;push(r*Math.cos(a),r*Math.sin(a),tag)}
+ }
+ // Cable shell sample points; these are guides, not constrained boundaries.
+ for(const [cx,cy] of centers){for(let j=0;j<24;j++){let a=2*Math.PI*j/24;push(cx+p.cd/2*Math.cos(a),cy+p.cd/2*Math.sin(a),'cable-guide')}}
+ // Logarithmic density proxy: high near cable, monotonically decreasing with distance.
+ // Rejection sampling uses a guaranteed baseline acceptance to retain sparse far-field nodes.
+ let attempts=0,maxAttempts=p.n*350,scale=Math.max(p.cd,1);
+ while(attempts<maxAttempts&&pts.length<p.n+tags.filter(x=>x!=='random').length){
+  attempts++;let r=R*Math.sqrt(random()),a=2*Math.PI*random(),x=r*Math.cos(a),y=r*Math.sin(a);
+  let dist=Math.min(...centers.map(c=>Math.hypot(x-c[0],y-c[1])));
+  let near=1/(1+Math.log1p(dist/scale)),weight=.07+.93*near;
+  let accept=weight*(1+(p.bias-1)*near)/p.bias;
+  if(random()<accept)push(x,y,'random');
+ }
+ if(attempts>=maxAttempts)throw Error('Не удалось набрать точки при заданной плотности');
+ const delaunay=window.d3.Delaunay.from(pts),tri=delaunay.triangles;
+ return {p,pts,tags,tri,centers,R,ri,ro,attempts};
+}
+function draw(m){
+ let ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(2,devicePixelRatio||1),scale=.46*Math.min(w,h)/m.R;
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#f1f6fc';ctx.fillRect(0,0,w,h);
+ const xy=i=>[w/2+m.pts[i][0]*scale,h/2+m.pts[i][1]*scale];
+ if($('showMesh').checked){ctx.strokeStyle='rgba(33,69,99,.24)';ctx.lineWidth=.55;ctx.beginPath();for(let k=0;k<m.tri.length;k+=3){let a=xy(m.tri[k]),b=xy(m.tri[k+1]),c=xy(m.tri[k+2]);ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineTo(...c);ctx.closePath()}ctx.stroke()}
+ if($('showPoints').checked){ctx.fillStyle='rgba(22,72,112,.60)';for(let i=0;i<m.pts.length;i++){let [x,y]=xy(i);ctx.fillRect(x-.7,y-.7,1.4,1.4)}}
+ function circle(r,color,width){ctx.beginPath();ctx.arc(w/2,h/2,r*scale,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke()}
+ circle(m.R,'#315c7a',1.5);circle(m.ro,'#4c6175',1.5);circle(m.ri,'#4c6175',1.5);
+ for(let [x,y] of m.centers){ctx.beginPath();ctx.arc(w/2+x*scale,h/2+y*scale,m.p.cd*scale/2,0,Math.PI*2);ctx.fillStyle='rgba(236,95,51,.55)';ctx.fill();ctx.strokeStyle='#a33822';ctx.lineWidth=1.5;ctx.stroke()}
+}
+$('run').onclick=()=>{let t=performance.now();$('run').disabled=true;$('status').textContent='Построение…';setTimeout(()=>{try{last=build();draw(last);$('stats').textContent='Всего точек: '+last.pts.length+'\nТреугольников: '+last.tri.length/3+'\nПопыток выборки: '+last.attempts+'\nВремя: '+Math.round(performance.now()-t)+' мс';$('status').textContent='Готово. Сетка экспериментальная, не конформная FEM.'}catch(e){$('status').textContent='Ошибка: '+e.message}finally{$('run').disabled=false}},20)};
+for(let id of ['showPoints','showMesh'])$(id).addEventListener('change',()=>{if(last)draw(last)});
+window.addEventListener('resize',()=>{if(last)draw(last)});
+$('run').click();
+</script></html>
