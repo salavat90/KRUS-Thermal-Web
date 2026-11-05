@@ -1,14 +1,14 @@
 'use strict';
 function solveRandomThermal(input){
  const {pts,tri,centers,p}=input, n=pts.length,nt=tri.length/3;
- const ro=p.d/2000,ri=ro-p.wall/1000,R=ro+p.ins/1000;
- const k=[0,p.kw,p.ks,p.ki,p.kc],regions=new Uint8Array(nt),area=new Float64Array(nt),sources=new Float64Array(nt);
+ const ro=p.d/2000,ri=ro-p.wall/1000,rpre=ro+(p.preins||0)/1000,R=rpre+p.ins/1000;
+ const k=[0,p.kw,p.ks,p.ki,p.kc,p.kpre||.013],regions=new Uint8Array(nt),area=new Float64Array(nt),sources=new Float64Array(nt);
  const diag=new Float64Array(n),rhs=new Float64Array(n),rows=Array.from({length:n},()=>new Map()),outer=new Map();
  const add=(a,b,v)=>{if(a===b)diag[a]+=v;else rows[a].set(b,(rows[a].get(b)||0)+v)};
  let cableAreas=new Float64Array(p.cables),cableTris=Array.from({length:p.cables},()=>[]);
  for(let q=0;q<nt;q++){
   const ids=[tri[3*q],tri[3*q+1],tri[3*q+2]],v=ids.map(i=>pts[i]),cx=(v[0][0]+v[1][0]+v[2][0])/3000,cy=(v[0][1]+v[1][1]+v[2][1])/3000,r=Math.hypot(cx,cy);
-  let reg=r<ri?1:r<ro?2:3,cable=-1;
+  let reg=r<ri?1:r<ro?2:r<rpre?5:3,cable=-1;
   for(let j=0;j<centers.length;j++)if(Math.hypot(cx-centers[j][0]/1000,cy-centers[j][1]/1000)<p.cd/2000){reg=4;cable=j;break}
   const A=Math.abs((v[1][0]-v[0][0])*(v[2][1]-v[0][1])-(v[2][0]-v[0][0])*(v[1][1]-v[0][1]))/2e6;
   if(!(A>1e-17))throw Error('Вырожденный треугольник');
