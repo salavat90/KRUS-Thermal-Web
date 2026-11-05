@@ -5,4 +5,7 @@ assert.ok(a.qSupports>0&&a.qTotal>b.qTotal);
 assert.ok(c.qShell<a.qShell);
 assert.ok(Math.abs(d.qTotal)<1e-10);
 assert.ok(Math.abs(a.qTotal-a.qShell-a.qCaps-a.qSupports)<1e-8);
+const insulated=f({...p,supportInsulation:.05,lambdaSupportInsulation:.04});
+assert.ok(insulated.qSupportsInsulated<a.qSupports);
+assert.ok(insulated.qTotalInsulated>b.qTotal&&insulated.qTotalInsulated<a.qTotal);
 console.log('PASS analytical tank reference',JSON.stringify({shell:a.qShell,caps:a.qCaps,supports:a.qSupports,total:a.qTotal}));
