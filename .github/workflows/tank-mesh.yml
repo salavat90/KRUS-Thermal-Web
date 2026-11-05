@@ -1,0 +1,18 @@
+name: 3D tank mesh validation
+on:
+  push:
+    paths:
+      - '3d/annulus-tetra.js'
+      - 'tests/tank-tetra.cjs'
+      - '.github/workflows/tank-mesh.yml'
+  workflow_dispatch:
+jobs:
+  mesh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify tetrahedral topology
+        run: node tests/tank-tetra.cjs
