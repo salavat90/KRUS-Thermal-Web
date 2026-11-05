@@ -256,3 +256,9 @@
 
 ## 2026-11-05: browser cache diagnosis
 Repeated old contacts error steel/insulation, steel/support, steel/bottomCap although source now expects normalized names and bottomCap/support. In fem-lab.html visible build marker 20261105-contacts-cachefix-1 and version query on local JS files added (commit 381cd46). If marker missing, Pages HTML is stale; if marker visible but old contacts remain, inspect deployed JS. No browser validation confirmed. Keep 2D frozen.
+
+## 2026-11-05 — temperature versus heat-flux-density view
+- Added `3d/flux-field.js`: for each P1 tetrahedron computes conductive flux density magnitude |q| = lambda |grad T| (W/m2), not total heat loss in W.
+- In existing `3d/fem-lab.html`, one dropdown above the 2D cut switches temperature (C) and heat flux density (W/m2). Both 3D surface and XY/XZ/YZ cut recolor; legends and click probe change units. FEM is not recomputed on switch. Tetra slice carries owner tetra indices via `3d/tetra-slice.js`.
+- Builds include 9ac89ea, 870d231, 65efea7, 8799719, 694f7f. CI and browser tests NOT verified. Attempt to create automated flux test was blocked by tool security; test is still needed. For material interfaces the flux density is discontinuous and rendered per tetra; nodal 3D point colors average adjacent tetra values only for visualization.
+- Existing total vessel heat losses (W) remain in numerical results. Do not label local W/m2 as W. Keep frozen 2D unchanged.
