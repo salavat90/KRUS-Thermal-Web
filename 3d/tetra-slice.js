@@ -6,7 +6,7 @@ function sliceTetraField(mesh,temperature,plane='XZ',offset=0){
  if(axis===undefined||!Number.isFinite(offset))throw Error('Invalid slice plane');
  const axes=plane==='XY'?[0,1]:plane==='XZ'?[0,2]:[1,2],tris=[],eps=1e-10;
  const edges=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
- const counts={};
+ const counts={},materials=[];
  for(let q=0;q<mesh.tets.length;q++){
   const tet=mesh.tets[q],region=mesh.regions?.[q]||'unknown';
   const pts=tet.map(id=>mesh.pts[id]),dist=pts.map(p=>p[axis]-offset);
@@ -30,9 +30,9 @@ function sliceTetraField(mesh,temperature,plane='XZ',offset=0){
   for(let j=1;j<poly.length-1;j++){
    const t=[poly[0],poly[j],poly[j+1]];
    const area=Math.abs((t[1].x-t[0].x)*(t[2].y-t[0].y)-(t[1].y-t[0].y)*(t[2].x-t[0].x));
-   if(area>1e-15){tris.push(t);counts[region]=(counts[region]||0)+1;}
+   if(area>1e-15){tris.push(t);materials.push(region);counts[region]=(counts[region]||0)+1;}
   }
  }
- return {triangles:tris,plane,offset,counts};
+ return {triangles:tris,materials,plane,offset,counts};
 }
 if(typeof module!=='undefined')module.exports={sliceTetraField};
