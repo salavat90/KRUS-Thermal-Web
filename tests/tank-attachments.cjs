@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {calculateTankAttachments:f}=require('../3d/attachments-heat.js');
+const p={diameter:2000,wall:8,insulation:100,lambdaSteel:45,lambdaInsulation:.04,lambdaSupport:45,hOutside:12,tProduct:80,tAmbient:-40,supportCount:4,supportArea:.005,supportLength:.45};
+const a=f(p),b=f({...p,supportCount:0}),c=f({...p,supportInsulation:.05});
+assert.ok(a.upper.q>0&&a.lower.q>0&&a.supports.total>0);
+assert.equal(b.supports.total,0);
+assert.ok(c.supports.total<a.supports.total);
+assert.ok(Math.abs(a.total-a.upper.q-a.lower.q-a.supports.total)<1e-9);
+assert.ok(a.upper.tOuter<p.tProduct&&a.upper.tOuter>p.tAmbient);
+const zero=f({...p,tProduct:p.tAmbient});assert.equal(zero.total,0);
+console.log('PASS attachment resistance estimates',a);
