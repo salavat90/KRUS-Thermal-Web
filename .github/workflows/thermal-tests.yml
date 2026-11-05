@@ -19,6 +19,8 @@ jobs:
         run: node --check tests/solver-smoke.cjs
       - name: Thermal solver smoke tests
         run: node tests/solver-smoke.cjs
+      - name: Random triangular thermal FEM smoke test
+        run: node tests/random-thermal-smoke.cjs
       - name: Adaptive mesh topology tests
         run: node tests/adaptive-mesh.cjs
       - name: Browser FEM beta smoke tests
