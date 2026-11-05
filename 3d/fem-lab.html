@@ -4,6 +4,30 @@ const $=id=>document.getElementById(id),canvas=$('view'),scene=new THREE.Scene()
 const camera=new THREE.PerspectiveCamera(42,1,.001,100),renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
 const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;scene.add(new THREE.HemisphereLight(0xffffff,0x889aaa,2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(3,6,5);scene.add(light);
 const root=new THREE.Group();scene.add(root);let result=null;
+// Separate persistent group: rebuilding the thermal scene must not remove the cutting plane.
+const cuttingGroup=new THREE.Group();scene.add(cuttingGroup);
+function updateCuttingPlane(){
+ const plane=$('slicePlane').value,offset=Number($('sliceOffset').value)/1000;
+ const R=Number($('diameter').value)/2000+Number($('insulation').value)/1000,H=Number($('height').value)/1000;
+ if(!Number.isFinite(R)||!Number.isFinite(H)||R<=0||H<=0)return;
+ for(const child of [...cuttingGroup.children]){cuttingGroup.remove(child);child.geometry?.dispose();child.material?.dispose()}
+ let width,height;
+ if(plane==='XY'){width=R*2.4;height=H*1.12;cuttingGroup.rotation.set(0,0,0);cuttingGroup.position.set(0,0,offset)}
+ else if(plane==='XZ'){width=R*2.4;height=R*2.4;cuttingGroup.rotation.set(-Math.PI/2,0,0);cuttingGroup.position.set(0,offset,0)}
+ else {width=R*2.4;height=H*1.12;cuttingGroup.rotation.set(0,Math.PI/2,0);cuttingGroup.position.set(offset,0,0)}
+ const geometry=new THREE.PlaneGeometry(width,height);
+ const surface=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:0x18b6d2,side:THREE.DoubleSide,transparent:true,opacity:.22,depthWrite:false,depthTest:false}));
+ surface.renderOrder=90;cuttingGroup.add(surface);
+ const border=new THREE.LineSegments(new THREE.EdgesGeometry(geometry),new THREE.LineBasicMaterial({color:0x08627c,depthTest:false,transparent:true,opacity:.95}));
+ border.renderOrder=91;cuttingGroup.add(border);
+ const grid=new THREE.Group(),lines=[];
+ const n=8;for(let i=1;i<n;i++){const x=-width/2+width*i/n,y=-height/2+height*i/n;lines.push(x,-height/2,0,x,height/2,0,-width/2,y,0,width/2,y,0)}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(lines,3));
+ const gridLines=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x278ca6,transparent:true,opacity:.35,depthTest:false}));
+ gridLines.renderOrder=91;cuttingGroup.add(gridLines);
+ cuttingGroup.visible=Boolean(result);
+}
+
 function clear(){for(const child of [...root.children]){root.remove(child);child.traverse(x=>{x.geometry?.dispose();x.material?.dispose()})}}
 function display(){
  if(!result)return;
@@ -49,7 +73,7 @@ function updateSliceRange(){
  const R=Number($('diameter').value)/2000+Number($('insulation').value)/1000,H=Number($('height').value)/1000;
  const limit=axis===1?H/2:R,slider=$('sliceOffset');
  slider.min=Math.round(-limit*1000);slider.max=Math.round(limit*1000);slider.step=Math.max(1,Math.round(limit*2000/250));
- slider.value=0;sliceView={zoom:1,dx:0,dy:0};renderSlice();
+ slider.value=0;sliceView={zoom:1,dx:0,dy:0};renderSlice();updateCuttingPlane();
 }
 function sliceTransform(){
  const w=sliceCanvas.clientWidth,h=sliceCanvas.clientHeight;
@@ -64,7 +88,7 @@ function renderSlice(){
  sliceCtx.setTransform(dpr,0,0,dpr,0,0);sliceCtx.fillStyle='#f0f5fa';sliceCtx.fillRect(0,0,w,h);
  if(!result)return;
  const plane=$('slicePlane').value,offset=Number($('sliceOffset').value)/1000;
- $('sliceValue').textContent=(offset*1000).toFixed(0);
+ $('sliceValue').textContent=(offset*1000).toFixed(0);updateCuttingPlane();
  sliceData=sliceTetraField(result.mesh,result.temperature,plane,offset);
  const triangles=sliceData.triangles;
  const R=Number($('diameter').value)/2000+Number($('insulation').value)/1000,H=Number($('height').value)/1000;
