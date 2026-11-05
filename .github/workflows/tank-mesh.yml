@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '3d/annulus-tetra.js'
+      - '3d/layered-tetra.js'
+      - 'tests/tank-layered-tetra.cjs'
       - 'tests/tank-tetra.cjs'
       - '.github/workflows/tank-mesh.yml'
   workflow_dispatch:
@@ -15,4 +17,6 @@ jobs:
         with:
           node-version: '22'
       - name: Verify tetrahedral topology
-        run: node tests/tank-tetra.cjs
+        run: |
+          node tests/tank-tetra.cjs
+          node tests/tank-layered-tetra.cjs
