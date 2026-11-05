@@ -18,7 +18,7 @@ function validateFullVesselMesh(mesh){
  const nonmanifold=[...faces.values()].filter(v=>v.length>2).length;
  const pairs=new Set();
  for(const owners of faces.values())if(owners.length===2&&owners[0]!==owners[1])pairs.add(owners.slice().sort().join('/'));
- const expected=['steel/insulation','gas/steel','liquid/steel','steel/support','steel/topCap','steel/bottomCap'];
+ const expected=[['steel','insulation'],['gas','steel'],['liquid','steel'],['bottomCap','support'],['steel','topCap'],['steel','bottomCap']].map(names=>names.sort().join('/'));
  const missingContacts=expected.filter(pair=>!pairs.has(pair));
  return {valid:missing.length===0&&missingContacts.length===0&&nonmanifold===0,counts,missing,missingContacts,nonmanifold,interfaces:[...pairs]};
 }
