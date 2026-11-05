@@ -42,7 +42,7 @@ def build(output, diameter=2000, height=3500, wall=8, insulation=100,
         parts["topCap"]=[cylinder(R,H/2,t)]
         parts["bottomCap"]=[cylinder(R,-H/2-t,t)]
         parts["insulation"]=[
-            ring(re,R,-H/2,H),
+            ring(re,R,-H/2-t,H+2*t),
             cylinder(re,H/2+t,ins),
             cylinder(re,-H/2-t-ins,ins),
         ]
