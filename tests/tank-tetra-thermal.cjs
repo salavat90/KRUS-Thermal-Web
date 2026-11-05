@@ -14,3 +14,7 @@ assert.ok(Number.isFinite(r.qOut)&&r.qOut>0);
 assert.ok(Math.abs(r.balance)<.05,'balance '+r.balance);
 assert.ok(Math.abs(r.qOut-analytical)/analytical<.15,'analytical discrepancy '+r.qOut+' vs '+analytical);
 console.log('PASS random tetra FEM',JSON.stringify({nodes:r.mesh.stats.nodes,tets:r.mesh.stats.tetrahedra,loss:r.qOut,analytical,balance:r.balance,iterations:r.iterations}));
+
+const beyond=buildRandomizedTetraMesh({...p,metalPoints:400,insulationPoints:700,seed:51});
+assert.equal(beyond.stats.randomInteriorNodes,1100,'requested random points must not be silently capped');
+console.log('PASS uncapped iterative tetra subdivision',beyond.stats.nodes);
