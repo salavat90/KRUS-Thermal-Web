@@ -1,0 +1,31 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>КРУС — единая сетка ёмкости</title><style>body{margin:0;background:#13233a;color:#ecf5ff;font:14px system-ui}header,aside,section{padding:16px;background:#203652}main{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px}label{display:block;margin:10px 0 4px}input{width:100%;box-sizing:border-box;background:#304c6b;color:white;border:1px solid #64809d;padding:8px}button{padding:10px;background:#267db8;color:white;border:0;margin-top:12px}canvas{width:100%;height:75vh;display:block;background:#f2f6fb;touch-action:none}#info{white-space:pre-line;line-height:1.7}a{color:#9dd7ff}@media(max-width:760px){main{grid-template-columns:1fr}canvas{height:55vh}}</style><header><b>КРУС-Thermal 3D · Единая геометрия</b>　<a href="./fem-lab.html">FEM цилиндрической части</a></header><main><aside><label>Диаметр, мм</label><input id="diameter" type="number" value="2000"><label>Высота, мм</label><input id="height" type="number" value="3500"><label>Стенка, мм</label><input id="wall" type="number" value="8"><label>Изоляция, мм</label><input id="insulation" type="number" value="100"><label>Опоры, шт.</label><input id="supports" type="number" value="4"><label>Уровень жидкости, %</label><input id="fill" type="range" min="0" max="100" step="5" value="30"><label>Сетка по X</label><input id="nx" type="number" value="20" min="4" max="128"><label>Сетка по Y</label><input id="ny" type="number" value="32" min="4" max="128"><label>Сетка по Z</label><input id="nz" type="number" value="20" min="4" max="128"><button id="run">Построить общую сетку</button><p>Цвета обозначают материалы, не температуры. Сетка в этой версии воксельная, без расчёта теплопроводности. При тонкой стенке необходимо гораздо более высокое разрешение.</p></aside><section><div id="status">Ожидание</div><canvas id="view"></canvas><div id="info"></div></section></main><script src="./unified-tank-mesh.js"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script><script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const $=id=>document.getElementById(id),canvas=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color(0xf2f6fb);
+const camera=new THREE.PerspectiveCamera(42,1,.01,100),renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+const orbit=new OrbitControls(camera,canvas);orbit.enableDamping=true;scene.add(new THREE.HemisphereLight(0xffffff,0x8194a8,2));
+const group=new THREE.Group();scene.add(group);
+const palette={steel:0x647b91,insulation:0x78b8d9,liquid:0x248bd1,gas:0xdce7f0,support:0xdc8645};
+function clear(){for(const c of [...group.children]){group.remove(c);c.geometry?.dispose();c.material?.dispose()}}
+function build(){try{
+ const p={};for(const id of ['diameter','height','wall','insulation','supports','fill','nx','ny','nz'])p[id]=Number($(id).value);
+ const m=makeUnifiedTankMesh(p);clear();
+ const boundary=new Map();
+ for(let q=0;q<m.tets.length;q++)for(const f of [[0,1,2],[0,1,3],[0,2,3],[1,2,3]]){
+  const ids=f.map(j=>m.tets[q][j]),key=ids.slice().sort((a,b)=>a-b).join(':');
+  if(boundary.has(key)){const prev=boundary.get(key);if(prev.material===m.regions[q])boundary.delete(key);else prev.interface=true}
+  else boundary.set(key,{ids,material:m.regions[q],interface:false});
+ }
+ const grouped={};for(const name of Object.keys(palette))grouped[name]=[];
+ for(const face of boundary.values()){if(face.interface)continue;for(const id of face.ids)grouped[face.material].push(...m.pts[id])}
+ for(const [name,positions] of Object.entries(grouped)){
+  if(!positions.length)continue;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.computeVertexNormals();
+  const material=new THREE.MeshBasicMaterial({color:palette[name],side:THREE.DoubleSide,transparent:true,opacity:name==='insulation'?.18:name==='gas'?.08:.85,depthWrite:name!=='insulation'&&name!=='gas'});
+  group.add(new THREE.Mesh(g,material));
+ }
+ camera.position.set(5,4,6);orbit.target.set(0,0,0);orbit.update();
+ $('status').textContent='Общая сетка построена (геометрический прототип)';
+ $('info').textContent='Узлов: '+m.stats.nodes+'; тетраэдров: '+m.stats.tetrahedra+'\nПо материалам: '+JSON.stringify(m.stats.counts)+'\nШаг сетки, мм: '+m.stats.pitch.map(v=>(v*1000).toFixed(1)).join(' × ')+'\nСтенка разрешена по минимальному шагу: '+(m.stats.thinWallResolved?'возможно':'нет')+'\nВнимание: контактные границы и тонкие стенки аппроксимированы; FEM пока не выполняется.';
+ }catch(e){$('status').textContent='Ошибка: '+e.message}}
+$('run').onclick=build;new ResizeObserver(()=>{const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(canvas);build();
+function frame(){requestAnimationFrame(frame);orbit.update();renderer.render(scene,camera)}frame();
+</script>
