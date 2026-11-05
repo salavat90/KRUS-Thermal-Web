@@ -19,6 +19,8 @@ jobs:
         run: node --check tests/solver-smoke.cjs
       - name: Thermal solver smoke tests
         run: node tests/solver-smoke.cjs
+      - name: Independent analytical heat-loss reference
+        run: node tests/analytic-reference.cjs
       - name: Validate ELCUT reference schema
         run: |
           node -e "const d=require('./validation/elcut-reference.json');if(d.cases.length!==15||d.cases.some(c=>!Number.isFinite(c.heatLossReferenceWm)))process.exit(1);console.log('15 ELCUT reference cases structurally valid; NOT numerically validated')"
