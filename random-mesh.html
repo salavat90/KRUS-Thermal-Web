@@ -16,15 +16,22 @@ function build(){
  for(const [cx,cy] of centers){for(let j=0;j<24;j++){let a=2*Math.PI*j/24;push(cx+p.cd/2*Math.cos(a),cy+p.cd/2*Math.sin(a),'cable-guide')}}
  // Logarithmic density proxy: high near cable, monotonically decreasing with distance.
  // Rejection sampling uses a guaranteed baseline acceptance to retain sparse far-field nodes.
- let attempts=0,maxAttempts=p.n*350,scale=Math.max(p.cd,1);
- while(attempts<maxAttempts&&pts.length<p.n+tags.filter(x=>x!=='random').length){
-  attempts++;let r=R*Math.sqrt(random()),a=2*Math.PI*random(),x=r*Math.cos(a),y=r*Math.sin(a);
-  let dist=Math.min(...centers.map(c=>Math.hypot(x-c[0],y-c[1])));
-  let near=1/(1+Math.log1p(dist/scale)),weight=.07+.93*near;
-  let accept=weight*(1+(p.bias-1)*near)/p.bias;
-  if(random()<accept)push(x,y,'random');
+ let attempts=0,randomAdded=0;
+ while(randomAdded<p.n){
+  attempts++;let x,y;
+  const focus=Math.min(.90,.35+.55*(p.bias-1)/99);
+  if(random()<focus){
+   const c=centers[Math.floor(random()*centers.length)];
+   // Logarithmic radial distribution: many points near the cable, fewer farther away.
+   const u=random(),radius=scale*(Math.expm1(u*Math.log1p(R/scale))),a=2*Math.PI*random();
+   x=c[0]+radius*Math.cos(a);y=c[1]+radius*Math.sin(a);
+   if(x*x+y*y>R*R)continue;
+  }else{
+   const r=R*Math.sqrt(random()),a=2*Math.PI*random();x=r*Math.cos(a);y=r*Math.sin(a);
+  }
+  push(x,y,'random');randomAdded++;
+  if(attempts>p.n*100)throw Error('Не удалось разместить точки');
  }
- if(attempts>=maxAttempts)throw Error('Не удалось набрать точки при заданной плотности');
  const delaunay=window.d3.Delaunay.from(pts),tri=delaunay.triangles;
  return {p,pts,tags,tri,centers,R,ri,ro,attempts};
 }
