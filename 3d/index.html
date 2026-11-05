@@ -19,8 +19,8 @@
 <p class="note">Это геометрический 3D-редактор первой очереди. Температурное поле и 3D FEM пока не реализованы. Крышка и днище пока плоские, нагреватели — геометрические траектории без теплового расчёта.</p></aside>
 <section class="stage"><div id="state">Загрузка 3D-движка…</div><canvas id="view"></canvas><div id="info" class="info"></div></section></main>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'https://esm.sh/three@0.170.0';
+import {OrbitControls} from 'https://esm.sh/three@0.170.0/examples/jsm/controls/OrbitControls.js';
 const $=id=>document.getElementById(id),canvas=$('view');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xeef4fa);
 const camera=new THREE.PerspectiveCamera(40,1,.01,1000);
