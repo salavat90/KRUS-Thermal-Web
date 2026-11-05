@@ -132,7 +132,7 @@ function renderSlice(){
  if($('sliceMesh').checked){sliceCtx.strokeStyle='rgba(24,51,80,.3)';sliceCtx.lineWidth=.6;for(const t of triangles){sliceCtx.beginPath();sliceCtx.moveTo(...tf.point(t[0]));sliceCtx.lineTo(...tf.point(t[1]));sliceCtx.lineTo(...tf.point(t[2]));sliceCtx.closePath();sliceCtx.stroke()}}
  if($('slicePoints').checked){sliceCtx.fillStyle='#1a3e61';const seen=new Set();for(const t of triangles)for(const p of t){const key=p.x.toFixed(7)+','+p.y.toFixed(7);if(seen.has(key))continue;seen.add(key);const [x,y]=tf.point(p);sliceCtx.fillRect(x-1,y-1,2,2)}}
  $('sliceLegend').style.display='block';$('sliceMax').textContent=hi.toFixed(2)+' °C';$('sliceMin').textContent=lo.toFixed(2)+' °C';
- $('sliceStats').textContent='Плоскость '+plane+' · положение '+(offset*1000).toFixed(0)+' мм · треугольников сечения: '+triangles.length+' · FEM областей: '+(result.fullVessel?JSON.stringify(result.mesh.stats.counts):'сталь, изоляция');
+ $('sliceStats').textContent='Плоскость '+plane+' · положение '+(offset*1000).toFixed(0)+' мм · треугольников сечения: '+triangles.length+' · Материалы в срезе: '+JSON.stringify(sliceData.counts);
 }
 function probeSlice(x,y){
  if(!sliceData)return;const p=sliceTransform().invert(x,y);
