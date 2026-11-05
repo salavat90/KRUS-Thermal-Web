@@ -137,10 +137,19 @@ function build(){
  try{
   const heat=tankHeat({kind,d,L,depth,wall,ins,lambdaSteel:v('ks'),lambdaIns:v('ki'),h:v('h'),Tinside:v('Tin'),Tair:v('Tair'),fill});
   if($('heatMap').checked){
-   // Surface colors are a radial resistance approximation; not a solved 3D field.
-   const cold=new THREE.Color(0x164bdb),warm=new THREE.Color(0xf8c641);
-   for(const child of group.children)if(child.isMesh&&['Корпус','Основная изоляция'].includes(child.name)){
-    child.material.color.copy(child.name==='Корпус'?warm:cold);
+   // Eight radial bands show the analytical temperature drop across insulation.
+   // These bands are visualization of the 1D resistance model, not 3D FEM.
+   for(const child of group.children)if(child.isMesh&&child.name==='Основная изоляция')child.visible=false;
+   const nBands=12,ri=d/2-wall,ro=d/2,re=ro+ins;
+   const resistance=Math.log(ro/ri)/(2*Math.PI*v('ks')*L)+Math.log(re/ro)/(2*Math.PI*v('ki')*L)+1/(v('h')*2*Math.PI*re*L);
+   const qSide=(v('Tin')-v('Tair'))/resistance;
+   for(let j=0;j<nBands;j++){
+    const radius=ro+ins*(j+1)/nBands;
+    const temp=v('Tair')+qSide*(Math.log(re/radius)/(2*Math.PI*v('ki')*L)+1/(v('h')*2*Math.PI*re*L));
+    const ratio=Math.max(0,Math.min(1,(temp-v('Tair'))/Math.max(.001,v('Tin')-v('Tair'))));
+    const col=new THREE.Color().setHSL(.67*(1-ratio),.95,.5);
+    const band=add('Температурная полоса '+j,shape(radius-ro),col.getHex(),.12,[0,0,0],rot);
+    band.renderOrder=10+j;
    }
   }
   $('stats').textContent='Оценочные теплопотери: '+heat.q.toFixed(1)+' Вт\\nОбечайка: '+heat.sideQ.toFixed(1)+' Вт\\nДнища (приближённо): '+heat.capQ.toFixed(1)+' Вт\\nПоверхностных точек: '+requested+'\\nРасчёт 3D FEM пока отсутствует. Опоры и уровень жидкости не участвуют в оценке.';
