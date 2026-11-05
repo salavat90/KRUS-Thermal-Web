@@ -7,7 +7,7 @@ const root=new THREE.Group();scene.add(root);
 function clear(){for(const obj of [...root.children]){root.remove(obj);obj.traverse(o=>{o.geometry?.dispose();o.material?.dispose()})}}
 function mat(color,opacity=1){return new THREE.MeshStandardMaterial({color,side:THREE.DoubleSide,transparent:opacity<1,opacity,depthWrite:opacity===1,roughness:.65})}
 function mesh(geometry,color,opacity=1,x=0,y=0,z=0){let m=new THREE.Mesh(geometry,mat(color,opacity));m.position.set(x,y,z);root.add(m);return m}
-function draw(p,fill){clear();const R=p.diameter/2000,H=p.height/1000,ins=p.insulation/1000,base=-H/2;
+function draw(p,fill,preserveCamera=false){clear();const R=p.diameter/2000,H=p.height/1000,ins=p.insulation/1000,base=-H/2;
  mesh(new THREE.CylinderGeometry(R,R,H,96,1,true),0x819aaf,.85);
  mesh(new THREE.CylinderGeometry(R,R,.02,96),0x7e97ac,1,0,H/2,0);
  mesh(new THREE.CylinderGeometry(R,R,.02,96),0x7e97ac,1,0,base,0);
@@ -41,15 +41,15 @@ function draw(p,fill){clear();const R=p.diameter/2000,H=p.height/1000,ins=p.insu
   const cloud=new THREE.Points(cloudGeo,new THREE.PointsMaterial({color:0xe44b28,size:.025,sizeAttenuation:true,depthTest:false}));cloud.renderOrder=101;root.add(cloud);
   $('status').textContent='Сетка стали и изоляции: '+net.stats.nodes+' узлов, '+net.stats.tetrahedra+' тетраэдров, общих узлов интерфейса '+net.stats.interfaceNodes+'. Показан сектор 90° поверх корпуса; красные точки — узлы. Смещение '+Number($('randomize').value).toFixed(2)+', зерно '+Number($('seed').value)+'. Опоры и днища пока не включены.';
  }
- camera.position.set(H*.85,H*.65,H*.95);controls.target.set(0,0,0);controls.update();
+ if(!preserveCamera){camera.position.set(H*.85,H*.65,H*.95);controls.target.set(0,0,0);controls.update();}
 }
-function run(){try{const p={};for(const id of ['diameter','height','wall','insulation','supportCount','supportArea','supportLength','lambdaSteel','lambdaInsulation','lambdaSupport','hOutside','tProduct','tAmbient','supportInsulation','lambdaSupportInsulation'])p[id]=Number($(id).value);
- p.supportInsulation/=1000;const fill=Number($('fill').value);$('fillLabel').textContent=fill+'%';const r=calculateTankReference(p);draw(p,fill);
+function run(preserveCamera=false){try{const p={};for(const id of ['diameter','height','wall','insulation','supportCount','supportArea','supportLength','lambdaSteel','lambdaInsulation','lambdaSupport','hOutside','tProduct','tAmbient','supportInsulation','lambdaSupportInsulation'])p[id]=Number($(id).value);
+ p.supportInsulation/=1000;const fill=Number($('fill').value);$('fillLabel').textContent=fill+'%';const r=calculateTankReference(p);draw(p,fill,preserveCamera);
  const rows=[['Обечайка',r.qShell],['Днища (плоские, приближённо)',r.qCaps],['Без опор — всего',r.qShell+r.qCaps],['Неизолированные опоры — дополнительно',r.qSupports],['С неизолированными опорами — всего',r.qTotal],['Изолированные опоры — дополнительно',r.qSupportsInsulated],['С изолированными опорами — всего',r.qTotalInsulated]];
  $('results').innerHTML=rows.map(([name,value])=>'<tr><td>'+name+'</td><td>'+value.toFixed(2)+' Вт</td></tr>').join('');
  if(!$('showTetra').checked)$('status').textContent='Геометрия построена. Сравнение аналитических сценариев выполнено; это не 3D FEM.';
  }catch(e){$('status').textContent='Ошибка: '+e.message}}
-$('run').onclick=run;$('fill').addEventListener('input',run);$('showTetra').addEventListener('change',run);for(const id of ['randomize','seed'])$(id).addEventListener('input',()=>{if($('showTetra').checked)run()});
+$('run').onclick=()=>run(true);$('fill').addEventListener('input',()=>run(true));$('showTetra').addEventListener('change',()=>run(true));for(const id of ['randomize','seed'])$(id).addEventListener('input',()=>{if($('showTetra').checked)run(true)});
 new ResizeObserver(()=>{let w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(canvas);
 run();function frame(){requestAnimationFrame(frame);controls.update();renderer.render(scene,camera)}frame();
 </script>
