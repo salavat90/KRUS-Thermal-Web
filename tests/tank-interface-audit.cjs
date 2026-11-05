@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {auditTetraInterfaces}=require('../3d/fem-interface-audit.js');
+const {makeLayeredTankMesh}=require('../3d/layered-tetra.js');
+const mesh=makeLayeredTankMesh({diameter:273,wall:8,insulation:45,height:1000,angular:12,steelLayers:2,insulationLayers:3,axial:4});
+const a=auditTetraInterfaces(mesh);
+assert.ok(a.valid,JSON.stringify(a));
+assert.ok(a.interfaces['insulation / steel']>0,'steel-insulation interface absent');
+assert.ok(a.exterior.steel>0&&a.exterior.insulation>0);
+const bad={pts:mesh.pts,tets:[...mesh.tets,mesh.tets[0]],regions:[...mesh.regions,mesh.regions[0]]};
+assert.equal(auditTetraInterfaces(bad).valid,false,'duplicate tet should be rejected');
+console.log('PASS material-interface FEM topology audit',a.interfaces);
