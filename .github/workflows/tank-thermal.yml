@@ -6,6 +6,8 @@ on:
       - '3d/tetra-slice.js'
       - '3d/attachments-heat.js'
       - '3d/unified-fem.js'
+      - '3d/fem-interface-audit.js'
+      - 'tests/tank-interface-audit.cjs'
       - 'tests/tank-unified-fem.cjs'
       - '3d/fem-lab.html'
       - 'tests/tank-primary-ui.cjs'
@@ -31,3 +33,4 @@ jobs:
           node tests/tank-attachments.cjs
           node tests/tank-unified-fem.cjs
           node tests/tank-primary-ui.cjs
+          node tests/tank-interface-audit.cjs
