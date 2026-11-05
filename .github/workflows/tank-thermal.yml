@@ -1,0 +1,20 @@
+name: 3D thermal FEM laboratory
+on:
+  push:
+    paths:
+      - '3d/tetra-thermal.js'
+      - '3d/layered-tetra.js'
+      - 'tests/tank-tetra-thermal.cjs'
+      - '.github/workflows/tank-thermal.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Random tetrahedral FEM numerical benchmark
+        run: node tests/tank-tetra-thermal.cjs
