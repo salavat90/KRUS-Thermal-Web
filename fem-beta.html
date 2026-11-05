@@ -47,4 +47,21 @@ for(const tr of m.tri){let t=tr.reduce((a,i)=>a+m.t[i],0)/3,f=Math.max(0,Math.mi
 $('status').textContent='FEM завершён · тестовая постановка';$('out').textContent='Треугольников: '+m.tri.length+'\nИтераций: '+m.iterations+'\nВода средняя: '+m.water.toFixed(2)+' °C\nT min/max: '+m.min.toFixed(2)+' / '+m.max.toFixed(2)+' °C\nМощность кабелей: '+(p.power*p.count).toFixed(2)+' Вт/м\nПотери наружу: '+m.qout.toFixed(2)+' Вт/м\nТепло от воды (+) / в воду (−): '+m.qwater.toFixed(2)+' Вт/м\nНевязка: '+m.balance.toFixed(5)+' Вт/м\nЛокальные температуры у кабелей (приближение): '+m.cableProbes.map((c,i)=>'#'+(i+1)+': '+c.maxC.toFixed(2)+' °C').join(', ');};
 worker.onerror=e=>{$('status').textContent='Ошибка: '+e.message;$('run').disabled=false;worker.terminate();worker=null};
 worker.postMessage(p)};
+function preview(){
+ const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(2,devicePixelRatio||1);
+ canvas.width=Math.max(1,Math.round(w*dpr));canvas.height=Math.max(1,Math.round(h*dpr));
+ const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#f4f8fc';ctx.fillRect(0,0,w,h);
+ const diam=Number($('diam').value),wall=Number($('wall').value),ins=Number($('ins').value),count=Number($('count').value);
+ if(!(diam>0&&wall>0&&diam>2*wall&&ins>0&&count>=1))return;
+ const r=diam/2,outer=r+ins,scale=Math.min(w,h)*.43/outer,cx=w/2,cy=h/2;
+ function disk(radius,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(cx,cy,radius*scale,0,Math.PI*2);ctx.fill();}
+ disk(outer,'#b9d9ed');disk(r,'#889baa');disk(r-wall,'#fff');
+ for(let i=0;i<count;i++){const angle=(135+i*60-90)*Math.PI/180,cr=r+3;
+ const x=cx+cr*Math.cos(angle)*scale,y=cy+cr*Math.sin(angle)*scale;
+ ctx.fillStyle='#e95c32';ctx.beginPath();ctx.arc(x,y,Math.max(3,3*scale),0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a32c18';ctx.stroke();}
+ ctx.fillStyle='#29415e';ctx.font='12px system-ui';ctx.fillText('Геометрия до расчёта · кабели показаны условно',12,22);
+}
+for(const id of ['diam','wall','ins','count'])$(id).addEventListener('input',preview);
+window.addEventListener('resize',preview);
+preview();
 </script></html>
