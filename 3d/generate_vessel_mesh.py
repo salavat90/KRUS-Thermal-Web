@@ -57,6 +57,19 @@ def build(output, diameter=2000, height=3500, wall=8, insulation=100,
             x=.72*R*math.cos(angle)
             z=.72*R*math.sin(angle)
             parts["support"].append(occ.addBox(x-w/2,-H/2-t-leg,z-w/2,w,leg,w))
+        # Supports pass through the bottom insulation to contact the steel bottom cap.
+        # Subtract their physical volumes from insulation BEFORE fragmentation.
+        # The supports themselves remain unchanged, so they have no overlapping
+        # material volume but retain common contact faces with adjacent materials.
+        if parts["support"]:
+            cut_insulation,_=occ.cut(
+                [(3,tag) for tag in parts["insulation"]],
+                [(3,tag) for tag in parts["support"]],
+                removeObject=True,removeTool=False
+            )
+            parts["insulation"]=[tag for dim,tag in cut_insulation if dim==3]
+            if not parts["insulation"]:
+                raise RuntimeError("Support cut removed the entire insulation domain")
         occ.synchronize()
         original=[(3,tag) for tags in parts.values() for tag in tags]
         # OCC fragments produce conformal interfaces, including between supports and lower cap.
