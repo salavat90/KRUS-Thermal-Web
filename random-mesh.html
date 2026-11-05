@@ -7,18 +7,28 @@ function build(){
  if(!Number.isInteger(p.n)||p.n<500||p.n>100000||!(p.d>2*p.wall&&p.wall>0&&p.ins>0&&p.cd>0&&p.bias>=1&&p.cables>=1&&p.cables<=3&&Number.isInteger(p.boundaryCount)&&p.boundaryCount>=48&&p.boundaryCount<=4096&&p.boundaryOffset>0))throw Error('Проверьте входные параметры');
  const random=rng(p.seed),ro=p.d/2,R=ro+p.ins,ri=ro-p.wall,scale=Math.max(p.cd,1);
  const centers=Array.from({length:p.cables},(_,j)=>{let a=(135+j*60-90)*Math.PI/180,r=ro+p.cd/2;return [r*Math.cos(a),r*Math.sin(a)]});
- const pts=[],tags=[],push=(x,y,tag)=>{pts.push([x,y]);tags.push(tag)};
- // Paired rings on each side of each interface, plus a shared exact boundary ring.
- // This improves geometry resolution but does not make unconstrained Delaunay conforming.
+ const pts=[],tags=[],cell=Math.max(.08,Math.min(p.cd*.14,p.boundaryOffset*.45)),grid=new Map();
+ const key=(ix,iy)=>ix+','+iy;
+ function push(x,y,tag){
+  const ix=Math.floor(x/cell),iy=Math.floor(y/cell);
+  for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++){
+   const ids=grid.get(key(ix+dx,iy+dy));if(!ids)continue;
+   for(const id of ids){const v=pts[id];if(Math.hypot(v[0]-x,v[1]-y)<cell*.65)return false}
+  }
+  const id=pts.length;pts.push([x,y]);tags.push(tag);
+  const k=key(ix,iy);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(id);return true;
+ }
  const offset=Math.min(p.boundaryOffset,p.wall*.2,p.ins*.2);
  const rings=[
   [ri-offset,'water-side'],[ri,'water-steel'],[ri+offset,'steel-side'],
   [ro-offset,'steel-outer-side'],[ro,'steel-insulation'],[ro+offset,'insulation-side'],
   [R-offset,'insulation-outer-side'],[R,'outside']
  ];
- for(const [radius,tag] of rings){
-  for(let j=0;j<p.boundaryCount;j++){
-   const angle=j*2*Math.PI/p.boundaryCount;
+ for(let layer=0;layer<rings.length;layer++){
+  const [radius,tag]=rings[layer];
+  const n=Math.max(48,Math.min(p.boundaryCount,Math.floor(2*Math.PI*radius/Math.max(offset*.95,cell*1.5))));
+  for(let j=0;j<n;j++){
+   const angle=2*Math.PI*(j+(layer%2)*.5)/n;
    push(radius*Math.cos(angle),radius*Math.sin(angle),tag);
   }
  }
@@ -30,7 +40,7 @@ function build(){
  const focusCount=Math.round(p.n*Math.min(.98,.80+.18*(p.bias-1)/99));
  for(let j=0;j<p.n;j++){
   let placed=false;
-  for(let retry=0;retry<200;retry++){
+  for(let retry=0;retry<600;retry++){
    attempts++;
    let x,y;
    if(j<focusCount){
@@ -43,9 +53,9 @@ function build(){
     x=radius*Math.cos(angle);y=radius*Math.sin(angle);
    }
    if(x*x+y*y>=R*R)continue;
-   push(x,y,'random');randomAdded++;placed=true;break;
+   if(!push(x,y,'random'))continue;randomAdded++;placed=true;break;
   }
-  if(!placed)throw Error('Не удалось разместить точки');
+  if(!placed)throw Error('Достигнута допустимая плотность точек; уменьшите количество или минимальный отступ');
  }
  const delaunay=window.d3.Delaunay.from(pts),tri=delaunay.triangles;
  return {p,pts,tags,tri,centers,R,ri,ro,attempts};
