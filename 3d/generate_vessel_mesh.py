@@ -56,7 +56,7 @@ def build(output, diameter=2000, height=3500, wall=8, insulation=100,
             angle=2*math.pi*i/max(1,supports)
             x=.72*R*math.cos(angle)
             z=.72*R*math.sin(angle)
-            parts["support"].append(occ.addBox(x-w/2,-H/2-t-leg,z-w/2,w,leg+t,w))
+            parts["support"].append(occ.addBox(x-w/2,-H/2-t-leg,z-w/2,w,leg,w))
         occ.synchronize()
         original=[(3,tag) for tags in parts.values() for tag in tags]
         # OCC fragments produce conformal interfaces, including between supports and lower cap.
