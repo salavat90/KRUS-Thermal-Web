@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '3d/tetra-thermal.js'
+      - '3d/tetra-slice.js'
+      - 'tests/tank-tetra-slice.cjs'
       - '3d/layered-tetra.js'
       - 'tests/tank-tetra-thermal.cjs'
       - '.github/workflows/tank-thermal.yml'
@@ -17,4 +19,6 @@ jobs:
         with:
           node-version: '22'
       - name: Random tetrahedral FEM numerical benchmark
-        run: node tests/tank-tetra-thermal.cjs
+        run: |
+          node tests/tank-tetra-thermal.cjs
+          node tests/tank-tetra-slice.cjs
