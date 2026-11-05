@@ -17,20 +17,25 @@ function build(){
  // Logarithmic density proxy: high near cable, monotonically decreasing with distance.
  // Rejection sampling uses a guaranteed baseline acceptance to retain sparse far-field nodes.
  let attempts=0,randomAdded=0;
- while(randomAdded<p.n){
-  attempts++;let x,y;
-  const focus=Math.min(.90,.35+.55*(p.bias-1)/99);
-  if(random()<focus){
-   const c=centers[Math.floor(random()*centers.length)];
-   // Logarithmic radial distribution: many points near the cable, fewer farther away.
-   const u=random(),radius=scale*(Math.expm1(u*Math.log1p(R/scale))),a=2*Math.PI*random();
-   x=c[0]+radius*Math.cos(a);y=c[1]+radius*Math.sin(a);
-   if(x*x+y*y>R*R)continue;
-  }else{
-   const r=R*Math.sqrt(random()),a=2*Math.PI*random();x=r*Math.cos(a);y=r*Math.sin(a);
+ const focusCount=Math.round(p.n*Math.min(.98,.80+.18*(p.bias-1)/99));
+ for(let j=0;j<p.n;j++){
+  let placed=false;
+  for(let retry=0;retry<200;retry++){
+   attempts++;
+   let x,y;
+   if(j<focusCount){
+    const c=centers[j%centers.length],u=Math.pow(random(),1.7);
+    const radius=Math.max(.15,p.cd*.12)*Math.pow((R*1.15)/Math.max(.15,p.cd*.12),u);
+    const angle=2*Math.PI*random();
+    x=c[0]+radius*Math.cos(angle);y=c[1]+radius*Math.sin(angle);
+   }else{
+    const radius=R*Math.sqrt(random()),angle=2*Math.PI*random();
+    x=radius*Math.cos(angle);y=radius*Math.sin(angle);
+   }
+   if(x*x+y*y>=R*R)continue;
+   push(x,y,'random');randomAdded++;placed=true;break;
   }
-  push(x,y,'random');randomAdded++;
-  if(attempts>p.n*100)throw Error('Не удалось разместить точки');
+  if(!placed)throw Error('Не удалось разместить точки');
  }
  const delaunay=window.d3.Delaunay.from(pts),tri=delaunay.triangles;
  return {p,pts,tags,tri,centers,R,ri,ro,attempts};
