@@ -1,0 +1,27 @@
+name: ELCUT low-resolution exploratory comparison
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/run-elcut-lowres.cjs'
+      - '.github/workflows/elcut-lowres.yml'
+      - 'validation/elcut-reference.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run 130x130 KRUS solver for all reference cases
+        run: node tests/run-elcut-lowres.cjs
+      - name: Upload provisional comparison table
+        uses: actions/upload-artifact@v4
+        with:
+          name: KRUS-ELCUT-130x130-provisional
+          path: validation/output/
