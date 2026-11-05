@@ -4,7 +4,7 @@ function fem(p){
  const pi=Math.PI,sec=72,ri=(p.diam/2-p.wall)/1000,ro=p.diam/2000,re=ro+p.ins/1000;
  if(!(ri>0&&ro>ri&&re>ro&&p.ki>0&&p.ks>0&&p.kw>0&&p.h>0&&p.count>0&&p.count<=3&&p.power>=0))throw Error('Проверьте параметры');
  const nw=8,ns=4,ni=14,radii=[];
- for(let j=0;j<=nw;j++)radii.push(ri*j/nw);
+ for(let j=1;j<=nw;j++)radii.push(ri*j/nw);
  for(let j=1;j<=ns;j++)radii.push(ri+(ro-ri)*j/ns);
  for(let j=1;j<=ni;j++)radii.push(ro+(re-ro)*j/ni);
  const pts=[[0,0]],idx=(j,i)=>1+j*sec+(i%sec);
