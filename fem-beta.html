@@ -11,7 +11,7 @@ function fem(p){
  for(const r of radii)for(let i=0;i<sec;i++){let a=2*pi*i/sec;pts.push([r*Math.cos(a),r*Math.sin(a)])}
  const tri=[],reg=[];
  for(let i=0;i<sec;i++){tri.push([0,idx(0,i),idx(0,i+1)]);reg.push(1)}
- for(let j=0;j<radii.length-1;j++)for(let i=0;i<sec;i++){let a=idx(j,i),b=idx(j,i+1),c=idx(j+1,i),d=idx(j+1,i+1),m=j<nw?1:j<nw+ns?2:3;tri.push([a,c,d],[a,d,b]);reg.push(m,m)}
+ for(let j=0;j<radii.length-1;j++)for(let i=0;i<sec;i++){let a=idx(j,i),b=idx(j,i+1),c=idx(j+1,i),d=idx(j+1,i+1),m=j<nw-1?1:j<nw+ns-1?2:3;tri.push([a,c,d],[a,d,b]);reg.push(m,m)}
  const n=pts.length,diag=new Float64Array(n),rhs=new Float64Array(n),adj=Array.from({length:n},()=>new Map()),k=[0,p.kw,p.ks,p.ki],centers=[];
  const add=(i,j,v)=>{if(i===j)diag[i]+=v;else adj[i].set(j,(adj[i].get(j)||0)+v)};
  for(let j=0;j<p.count;j++){let a=(135+j*60-90)*pi/180;centers.push([(ro+.003)*Math.cos(a),(ro+.003)*Math.sin(a)])}
