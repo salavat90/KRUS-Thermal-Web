@@ -7,6 +7,8 @@ on:
       - '3d/attachments-heat.js'
       - '3d/unified-fem.js'
       - 'tests/tank-unified-fem.cjs'
+      - '3d/fem-lab.html'
+      - 'tests/tank-primary-ui.cjs'
       - 'tests/tank-attachments.cjs'
       - 'tests/tank-tetra-slice.cjs'
       - '3d/layered-tetra.js'
@@ -28,3 +30,4 @@ jobs:
           node tests/tank-tetra-slice.cjs
           node tests/tank-attachments.cjs
           node tests/tank-unified-fem.cjs
+          node tests/tank-primary-ui.cjs
