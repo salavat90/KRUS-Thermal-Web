@@ -68,8 +68,19 @@ function solveFullVesselFEM(mesh,p){
  const qByRegion={};let qOut=0;
  for(const {f,area,region} of boundary){const q=h*area*(f.reduce((s,i)=>s+x[i],0)/3-Ta);qOut+=q;qByRegion[region]=(qByRegion[region]||0)+q}
  let min=Infinity,max=-Infinity;for(const t of x){min=Math.min(min,t);max=Math.max(max,t)}
+ const overshoot=Math.max(0,max-Math.max(Ti,Ta),Math.min(Ti,Ta)-min);
+ const relativeBalance=Math.abs(qIn-qOut)/Math.max(1,Math.abs(qIn),Math.abs(qOut));
+ const tempTolerance=1e-3,energyTolerance=1e-3;
+ const physics={
+  overshoot,relativeBalance,
+  valid:overshoot<=tempTolerance&&relativeBalance<=energyTolerance,
+  message:overshoot>tempTolerance?'НАРУШЕН ПРИНЦИП МАКСИМУМА':relativeBalance>energyTolerance?'НЕ СОШЁЛСЯ ТЕПЛОВОЙ БАЛАНС':'Контроль диапазона температур и теплового баланса пройден'
+ };
+ if(!physics.valid)throw Error('Контроль физики FEM: '+physics.message+
+  '; T=['+min.toFixed(4)+','+max.toFixed(4)+'] °C, границы=['+Ta+','+Ti+
+  '] °C, qIn='+qIn.toFixed(4)+' Вт, qOut='+qOut.toFixed(4)+' Вт, относительный дисбаланс='+relativeBalance.toExponential(3));
  // Remap tetra indices to active FEM nodes for slicing and visualization.
  const remapped={pts:original.map(id=>pts[id]),tets:tets.map(t=>t.map(id=>lookup.get(id))),regions,stats:{nodes:n,tetrahedra:tets.length,randomInteriorNodes:0,counts:count}};
- return {mesh:remapped,temperature:Array.from(x),qIn,qOut,qByRegion,balance:qIn-qOut,iterations,relativeResidual:residual,min,max,fullVessel:true};
+ return {mesh:remapped,temperature:Array.from(x),qIn,qOut,qByRegion,balance:qIn-qOut,iterations,relativeResidual:residual,min,max,physics,fullVessel:true};
 }
 if(typeof module!=='undefined')module.exports={solveFullVesselFEM};
