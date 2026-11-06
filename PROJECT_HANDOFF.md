@@ -262,3 +262,11 @@ Repeated old contacts error steel/insulation, steel/support, steel/bottomCap alt
 - In existing `3d/fem-lab.html`, one dropdown above the 2D cut switches temperature (C) and heat flux density (W/m2). Both 3D surface and XY/XZ/YZ cut recolor; legends and click probe change units. FEM is not recomputed on switch. Tetra slice carries owner tetra indices via `3d/tetra-slice.js`.
 - Builds include 9ac89ea, 870d231, 65efea7, 8799719, 694f7f. CI and browser tests NOT verified. Attempt to create automated flux test was blocked by tool security; test is still needed. For material interfaces the flux density is discontinuous and rendered per tetra; nodal 3D point colors average adjacent tetra values only for visualization.
 - Existing total vessel heat losses (W) remain in numerical results. Do not label local W/m2 as W. Keep frozen 2D unchanged.
+
+## 2026-11-06 — Remove brown triangles and reject unphysical FEM
+- User screenshot showed brown/orange outlines obscuring supports in heat flux view. Removed the entire special-material triangle-outline overlay from `3d/fem-lab.html`. The `sliceMesh` checkbox still independently controls optional neutral mesh lines. FEM materials remain represented by the actual scalar field; no synthetic colors for supports/caps.
+- Reduced 3D vertex cloud opacity to 0.08 in full-vessel mode and enabled depth testing; prevents vertices from visually covering surfaces.
+- Added physics gate in `3d/full-vessel-fem.js`: maximum-principle check against ambient/product boundary temperatures (tolerance 0.001 C), and relative energy balance tolerance 0.001. Violations throw and do not publish a misleading result. Reports `physics` on success. This is a numerical sanity gate, not independent validation of BCs or support heat bridges.
+- Updated visible build to `20261106-physics-1` and cache-versioned relevant JS.
+- Commits `6cafc32`, `525748c`. CI and browser test are NOT verified.
+- IMPORTANT: Existing solver applies Dirichlet at every node belonging to liquid tetrahedra, including shared liquid-solid interface nodes; this approximates a perfectly mixed, thermostated liquid. Gas is pure conduction. Flux density (W/m2) is not total heat loss (W). Region-specific outward qByRegion reflects exposed boundary faces only. Validate physical BCs and mesh convergence before engineering use.
