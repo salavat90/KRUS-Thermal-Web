@@ -270,3 +270,9 @@ Repeated old contacts error steel/insulation, steel/support, steel/bottomCap alt
 - Updated visible build to `20261106-physics-1` and cache-versioned relevant JS.
 - Commits `6cafc32`, `525748c`. CI and browser test are NOT verified.
 - IMPORTANT: Existing solver applies Dirichlet at every node belonging to liquid tetrahedra, including shared liquid-solid interface nodes; this approximates a perfectly mixed, thermostated liquid. Gas is pure conduction. Flux density (W/m2) is not total heat loss (W). Region-specific outward qByRegion reflects exposed boundary faces only. Validate physical BCs and mesh convergence before engineering use.
+
+## 2026-11-06 — urgent regression fix after blank FEM canvas
+- User screenshot: after previous change the 2D cut is completely blank while the JSON is selected. Root cause: new strict physics gate in `3d/full-vessel-fem.js` throws for max-principle/energy-balance deviation; `runFullVessel` catch in `fem-lab.html` clears result, geometry and slice. This is a regression.
+- Changed physics gate to nonblocking diagnostics. Solver now returns `physics.valid`, `physics.message`, `physics.overshoot`, `physics.relativeBalance`; UI displays an explicit warning if invalid but retains FEM map for debugging. Build `20261106-physics-2` and versioned solver URL. Commits `bb53d69`, `a246c28`.
+- Brown triangle overlay remains removed. No proof of numerical validity: do not use unvalidated results for engineering. Browser and CI checks not yet confirmed.
+- Next: investigate max-principle violation and qIn/qOut conservation numerically, validate FEM assembly and boundary face handling on real JSON; add automated regression test for nonblocking warning and valid field. Preserve existing FEM Lab and 2D frozen version.
