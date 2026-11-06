@@ -283,3 +283,9 @@ Repeated old contacts error steel/insulation, steel/support, steel/bottomCap alt
 - The deployment kit was syntax-checked locally (Python compile, bash -n, ZIP integrity), but Docker image build, actual Gmsh geometry and browser integration have NOT been run. The server OS is not yet confirmed; assumed Ubuntu/Debian. API has no auth; restrict via VPN/auth proxy before exposing publicly.
 - Deployment config: `.env` DOMAIN/ports/repo URL/ref, compose resource limits. The pilot frontend uses prompt dialogs for geometry; proper form integration remains outstanding.
 - Archive delivered in current conversation, not committed into repository. For future chat request the ZIP or upload it to GitHub, then test on target host.
+
+## 2026-11-06 — возврат к 2D, цветовой контраст и отдельный handoff
+- Пользователь приостановил Windows 11 серверное развёртывание, вернулся к 2D `random-mesh.html` и потребовал более заметных температурных цветов без подгонки расчётов.
+- В `random-mesh.html` добавлены контрастная и классическая палитры, регулируемый визуальный контраст, полный диапазон или 2–98% узлов (клиппинг только цветов), синхронизированная легенда; точки и линии сетки по умолчанию отключены для лучшей читаемости. FEM решатель и граничные условия НЕ менялись.
+- Создан `2D_HANDOFF.md` с архитектурой, правилами работы для нового чата, ограничениями и планом тестов. Коммиты `16c0f77`, `164b266`, `662b36f`.
+- ВАЖНО: CI и браузерная проверка новой палитры не подтверждены. Сверить легенду и палитру, проверить обе настройки. При возврате к 2D сначала читать `2D_HANDOFF.md`. 3D и серверные скрипты не трогать.
