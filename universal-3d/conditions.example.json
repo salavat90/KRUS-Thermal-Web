@@ -1,0 +1,8 @@
+{
+  "fluidTemperature": 60,
+  "ambientTemperature": -40,
+  "hOutside": 12,
+  "lambdaSteel": 45,
+  "lambdaInsulation": 0.04,
+  "heaterPowerTotal": 500
+}
