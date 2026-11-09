@@ -8,10 +8,9 @@ Windows 11 x64, Git for Windows, Python 3.11/3.12 x64 with Python Launcher `py`,
 
 ## CMD commands
 ```bat
-mkdir C:\Work
-cd /d C:\Work
-git clone https://github.com/salavat90/KRUS-Thermal-Web.git
-cd KRUS-Thermal-Web
+cd /d C:\
+git clone https://github.com/salavat90/KRUS-Thermal-Web.git C:\KRUS-Thermal-Web
+cd /d C:\KRUS-Thermal-Web
 git switch feat/universal-3d-piping
 setup-windows.cmd
 run-editor-windows.cmd
@@ -31,3 +30,6 @@ For a new Windows computer: clone the repository, switch to the branch, run setu
 
 ## Security
 No tokens or secrets in Git. Do not merge into main until validated.
+
+## 2026-11-09 — fixed install location
+The turnkey Windows 11 installer stores the repository at **`C:\KRUS-Thermal-Web`** (`KRUS_PROJECT` in bootstrap/common.cmd). The Python virtual environment is `C:\KRUS-Thermal-Web\.venv` and `migration-input` is inside the same folder. Codex CLI and temporary setup logs are stored separately under `%LOCALAPPDATA%\KRUS-Thermal-Tools`, so the repository directory does not need to exist before git clone. Do not use the old `%USERPROFILE%\KRUS\KRUS-Thermal-Web` path.
