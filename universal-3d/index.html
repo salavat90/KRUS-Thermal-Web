@@ -1,0 +1,90 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>КРУС-Thermal · Универсальный 3D редактор</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#122139;color:#e8f2ff;font:14px system-ui}header{background:#203451;padding:12px 16px;display:flex;gap:20px;align-items:center}main{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 52px)}aside{background:#203451;overflow:auto;padding:14px}section{min-width:0;position:relative}#view{display:block;width:100%;height:100%;background:#eef4f9}label{display:block;font-size:12px;color:#bcd4e9;margin:9px 0 4px}input,select,textarea{width:100%;background:#304a68;border:1px solid #587b9e;border-radius:5px;color:white;padding:7px}button{background:#267fbd;border:0;border-radius:5px;color:white;padding:9px;cursor:pointer}button:disabled{opacity:.4}.buttons{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}.buttons button{flex:1;min-width:70px}details{border:1px solid #4c6885;border-radius:6px;margin:10px 0}summary{cursor:pointer;padding:10px;font-weight:650}details>div{padding:0 10px 12px}.hint{font-size:12px;color:#b6cde4;line-height:1.5}#status{position:absolute;left:12px;bottom:12px;right:12px;background:#203451e8;padding:10px;border-radius:6px;pointer-events:none}#overlay{position:absolute;top:12px;left:12px;background:#203451e8;padding:9px;border-radius:5px}.item{padding:7px;border-bottom:1px solid #3b5675;cursor:pointer}.item.active{background:#376c94}.bad{color:#ffb79b}#files{display:none}@media(max-width:780px){main{grid-template-columns:1fr;height:auto}aside{max-height:48vh}section{height:65vh}}
+</style>
+<header><b>КРУС-Thermal · 3D-конфигуратор</b><small>Экспериментальная ветка · оси → объём</small></header>
+<main><aside>
+<details open><summary>Построение осей</summary><div>
+<label>Режим</label><select id="tool"><option value="select">Выделение / свойства</option><option value="draw">Рисовать ось (клики)</option><option value="branch">Ветвление от узла</option></select>
+<label>Плоскость построения</label><select id="plane"><option value="XZ">XZ (горизонтальная)</option><option value="XY">XY (вертикальная)</option><option value="YZ">YZ (вертикальная)</option></select>
+<label>Координата плоскости, м</label><input id="offset" type="number" value="0" step=".1">
+<label>Привязка к сетке, м</label><input id="snap" type="number" value=".25" min=".001" step=".05">
+<div class="buttons"><button id="finish">Завершить ветку</button><button id="undo">Отменить</button></div>
+<p class="hint">В режиме рисования щёлкайте по рабочей плоскости. Для байпаса начните от существующего узла и закончите на другом узле. Клавиша Esc завершает ветку. В режиме выделения кликните по трубе.</p>
+</div></details>
+<details open><summary>Параметры выбранного участка</summary><div>
+<label>Наружный диаметр, мм</label><input id="diameter" type="number" value="108" min="5">
+<label>Толщина стенки, мм</label><input id="wall" type="number" value="4" min=".1" step=".5">
+<label>Изоляция, мм</label><input id="insulation" type="number" value="50" min="0">
+<label>Температура продукта, °C</label><input id="temp" type="number" value="60">
+<label>Температура воздуха, °C</label><input id="air" type="number" value="-40">
+<label>λ изоляции, Вт/(м·К)</label><input id="lambda" type="number" value=".04" step=".005" min=".001">
+<label>Нагреватель, Вт/м</label><input id="power" type="number" value="30" min="0">
+<label>Радиус сглаживания отвода, м (визуально)</label><input id="bend" type="number" value="0" min="0" step=".05">
+<div class="buttons"><button id="apply">Применить</button><button id="remove">Удалить участок</button></div>
+</div></details>
+<details open><summary>Слои и режим</summary><div>
+<label><input id="axes" type="checkbox" checked style="width:auto"> Центральные оси</label>
+<label><input id="steel" type="checkbox" checked style="width:auto"> Металл</label>
+<label><input id="ins" type="checkbox" checked style="width:auto"> Изоляция</label>
+<label><input id="heaters" type="checkbox" checked style="width:auto"> Условная трасса нагревателя</label>
+<label>Режим отображения</label><select id="mode"><option value="solid">Объёмная модель</option><option value="wire">Каркас</option><option value="heat">Оценка удельных потерь (не FEM)</option></select>
+</div></details>
+<details open><summary>Объекты и результаты</summary><div><div id="objects"></div><p class="hint" id="summary"></p></div></details>
+<div class="buttons"><button id="demo">Пример с байпасом</button><button id="save">Сохранить JSON</button><button id="load">Открыть JSON</button></div><input type="file" id="files" accept=".json">
+<p class="hint">Внимание: объёмная геометрия — предварительная визуализация. Тройники и сопряжения здесь не являются точными CAD Boolean-телами. Теплопотери — аналитическая оценка для прямых участков, а не 3D FEM. Для полноценного расчёта требуется Gmsh/OCC и граничные условия.</p>
+</aside><section><canvas id="view"></canvas><div id="overlay">ЛКМ: построение/выделение · ПКМ: вращение · колесо: масштаб</div><div id="status">Готов к построению</div></section></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const $=id=>document.getElementById(id),canvas=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color(0xeef4f9);
+const camera=new THREE.PerspectiveCamera(45,1,.01,10000);camera.position.set(8,7,9);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};controls.target.set(1,0,0);
+scene.add(new THREE.HemisphereLight(0xffffff,0x728ba7,2));const light=new THREE.DirectionalLight(0xffffff,1.4);light.position.set(5,10,6);scene.add(light);
+const grid=new THREE.GridHelper(30,60,0x7293aa,0xc5d7e2);scene.add(grid);
+const group=new THREE.Group();scene.add(group);let project={version:1,nodes:[],edges:[]},selected=null,lastNode=null,history=[];
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),pickables=[];
+const vec=p=>new THREE.Vector3(p[0],p[1],p[2]);
+function status(s){$('status').textContent=s}
+function validate(){const ids=new Set(project.nodes.map(n=>n.id));for(const e of project.edges){if(!ids.has(e.a)||!ids.has(e.b)||e.a===e.b)throw Error('Повреждён граф трубопровода');if(!(e.diameter>2*e.wall&&e.wall>0&&e.insulation>=0&&e.lambda>0))throw Error('Недопустимые параметры трубы '+e.id)}}
+function defaults(){return Object.fromEntries(['diameter','wall','insulation','temp','air','lambda','power','bend'].map(id=>[id,Number($(id).value)]))}
+function getNode(id){return project.nodes.find(n=>n.id===id)}
+function nextId(prefix){return prefix+(Math.max(0,...[...project.nodes,...project.edges].filter(x=>x.id.startsWith(prefix)).map(x=>Number(x.id.slice(prefix.length))||0))+1)}
+function remember(){history.push(JSON.stringify(project));if(history.length>40)history.shift()}
+function addNode(p){const tol=Math.max(.01,Number($('snap').value)*.25);const found=project.nodes.find(n=>vec(n.p).distanceTo(vec(p))<tol);if(found)return found.id;const id=nextId('N');project.nodes.push({id,p});return id}
+function addEdge(a,b){if(a===b)return;const A=getNode(a),B=getNode(b);if(!A||!B)return;const length=vec(A.p).distanceTo(vec(B.p));if(length<.001)return;const duplicate=project.edges.find(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));if(duplicate)return;project.edges.push({id:nextId('E'),a,b,...defaults()});selected=project.edges.at(-1).id}
+function cylBetween(a,b,r,material){const dir=b.clone().sub(a),len=dir.length();if(len<.0001)return null;const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,14,1,true),material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());return mesh}
+function loss(e){const L=vec(getNode(e.a).p).distanceTo(vec(getNode(e.b).p));const r=e.diameter/2000,R=r+e.insulation/1000,dt=e.temp-e.air;const h=12;const resist=e.insulation>0?Math.log(R/r)/(2*Math.PI*e.lambda)+1/(2*Math.PI*R*h):1/(2*Math.PI*r*h);return {length:L,q:dt/resist,watts:dt/resist*L}}
+function clear(){for(const child of [...group.children]){group.remove(child);child.traverse(o=>{o.geometry?.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose())}})}pickables=[]}
+function renderModel(){
+ try{validate()}catch(e){status(e.message);return}clear();let total=0,totalL=0;
+ for(const e of project.edges){const a=vec(getNode(e.a).p),b=vec(getNode(e.b).p),r=e.diameter/2000,R=r+e.insulation/1000,calc=loss(e);total+=calc.watts;totalL+=calc.length;
+  const isSel=selected===e.id,heat=$('mode').value==='heat';const ratio=Math.max(0,Math.min(1,Math.abs(calc.q)/150));
+  const color=heat?new THREE.Color().setHSL(.65*(1-ratio),.9,.48):new THREE.Color(isSel?0xffbd5e:0x648ba8);
+  const material=new THREE.MeshStandardMaterial({color,transparent:true,opacity:$('ins').checked?.24:1,side:THREE.DoubleSide,wireframe:$('mode').value==='wire'});
+  if($('steel').checked){const m=cylBetween(a,b,r,material);if(m){m.userData.edge=e.id;group.add(m);pickables.push(m)}}
+  if($('ins').checked&&e.insulation>0){const m=cylBetween(a,b,R,new THREE.MeshStandardMaterial({color:heat?color:0x72c1d7,transparent:true,opacity:.23,depthWrite:false,side:THREE.DoubleSide,wireframe:$('mode').value==='wire'}));if(m)group.add(m)}
+  if($('axes').checked){const g=new THREE.BufferGeometry().setFromPoints([a,b]);group.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:isSel?0xe48b23:0x1d4f81})))}
+  if($('heaters').checked&&e.power>0){const direction=b.clone().sub(a).normalize(),side=new THREE.Vector3(0,1,0).cross(direction);if(side.length()<.01)side.set(1,0,0);side.normalize().multiplyScalar(r+.004);const g=new THREE.BufferGeometry().setFromPoints([a.clone().add(side),b.clone().add(side)]);group.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0xe55331})))}
+ }
+ for(const n of project.nodes){const p=vec(n.p);const mesh=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),new THREE.MeshBasicMaterial({color:n.id===lastNode?0xf08825:0x244d70}));mesh.position.copy(p);mesh.userData.node=n.id;group.add(mesh);pickables.push(mesh)}
+ $('objects').innerHTML='';for(const e of project.edges){const d=document.createElement('div');d.className='item'+(selected===e.id?' active':'');d.textContent=e.id+' · Ø'+e.diameter+' · '+loss(e).length.toFixed(2)+' м';d.onclick=()=>select(e.id);$('objects').append(d)}
+ $('summary').textContent='Узлов: '+project.nodes.length+' · участков: '+project.edges.length+' · длина: '+totalL.toFixed(2)+' м · оценка теплопотерь: '+total.toFixed(1)+' Вт · нагрев: '+project.edges.reduce((s,e)=>s+e.power*loss(e).length,0).toFixed(1)+' Вт. Внимание: оценка без тройников, отводов и тепловых мостов.';
+}
+function select(id){selected=id;const e=project.edges.find(x=>x.id===id);if(e)for(const key of ['diameter','wall','insulation','temp','air','lambda','power','bend'])$(key).value=e[key]??0;renderModel()}
+function worldPoint(event){const rect=canvas.getBoundingClientRect();mouse.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(mouse,camera);const axis=$('plane').value,offset=Number($('offset').value)||0;const normal=axis==='XZ'?new THREE.Vector3(0,1,0):axis==='XY'?new THREE.Vector3(0,0,1):new THREE.Vector3(1,0,0);const plane=new THREE.Plane().setFromNormalAndCoplanarPoint(normal,normal.clone().multiplyScalar(offset));const hit=new THREE.Vector3();if(!ray.ray.intersectPlane(plane,hit))return null;const step=Math.max(.001,Number($('snap').value)||.25);return hit.toArray().map(x=>Math.round(x/step)*step)}
+let down=null;canvas.addEventListener('pointerdown',e=>{if(e.button===0)down=[e.clientX,e.clientY]});canvas.addEventListener('pointerup',e=>{if(e.button!==0||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(mouse,camera);const hits=ray.intersectObjects(pickables,false);const tool=$('tool').value;if(tool==='select'){const edge=hits.find(h=>h.object.userData.edge);if(edge)select(edge.object.userData.edge);return}
+ const p=worldPoint(e);if(!p)return;remember();let id;if(hits.length&&hits[0].object.userData.node)id=hits[0].object.userData.node;else id=addNode(p);if(lastNode&&lastNode!==id)addEdge(lastNode,id);lastNode=id;renderModel();status('Точка '+id+'; продолжайте ветку или нажмите «Завершить ветку»')});
+$('finish').onclick=()=>{lastNode=null;renderModel()};$('undo').onclick=()=>{if(history.length){project=JSON.parse(history.pop());lastNode=null;selected=null;renderModel()}};window.addEventListener('keydown',e=>{if(e.key==='Escape')$('finish').click()});
+$('apply').onclick=()=>{const e=project.edges.find(x=>x.id===selected);if(!e)return;remember();Object.assign(e,defaults());renderModel()};
+$('remove').onclick=()=>{remember();project.edges=project.edges.filter(x=>x.id!==selected);selected=null;renderModel()};
+for(const id of ['axes','steel','ins','heaters','mode'])$(id).onchange=renderModel;
+function demo(){project={version:1,nodes:[{id:'N1',p:[0,0,0]},{id:'N2',p:[3,0,0]},{id:'N3',p:[6,0,0]},{id:'N4',p:[3,0,2]},{id:'N5',p:[6,0,2]},{id:'N6',p:[6,0,4]},{id:'N7',p:[8,0,4]}],edges:[]};const edges=[['N1','N2'],['N2','N3'],['N2','N4'],['N4','N5'],['N5','N3'],['N3','N6'],['N6','N7']];edges.forEach(([a,b],i)=>project.edges.push({id:'E'+(i+1),a,b,...defaults()}));selected=null;lastNode=null;renderModel();controls.target.set(4,0,2);camera.position.set(11,8,12);controls.update()}
+$('demo').onclick=()=>{remember();demo()};
+$('save').onclick=()=>{const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KRUS-pipeline.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('load').onclick=()=>$('files').click();$('files').onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.nodes)||!Array.isArray(obj.edges)||obj.nodes.length>50000||obj.edges.length>50000)throw Error('Некорректный проект');remember();project=obj;validate();selected=null;lastNode=null;renderModel();status('Проект загружен')}catch(err){status('Ошибка файла: '+err.message)}};
+new ResizeObserver(()=>{const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(canvas);
+function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera)}demo();loop();
+</script></html>
