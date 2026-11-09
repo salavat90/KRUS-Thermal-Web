@@ -41,3 +41,10 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 - Added `requirements.txt`, `conditions.example.json`, `README-3DFEM.md`. The editor can import the numerical FEM summary JSON, not the 3D field rendering.
 - WARNING: This is not a complete or validated universal thermal engineering application. No actual Gmsh execution in this environment; geometry and BC need testing on straight pipe, tee, bypass and elbow. It does not model standard elbow radii, local valves/flanges/supports, cable contact, fluid flow or coupled CFD. Energy balance does not imply physical accuracy.
 - Continue by validating OCC material contacts, tetra quality, end-face conditions, benchmark and convergence, then integrate backend into a one-click UI. Do not claim finished production status.
+
+## 2026-11-09 — Codex Windows 11 migration
+- Created root `AGENTS.md` (Codex agent instructions), `universal-3d/README-CODEX-WINDOWS.md`, CMD scripts `setup-windows.cmd`, `run-editor-windows.cmd`, `smoke-fem-windows.cmd`, sample `universal-3d/example-pipe.json`, and root `.gitignore`.
+- Intended environment: Windows 11, Git, Python 3.11/3.12, Node.js LTS and Codex CLI or VS Code extension. No PowerShell required for routine commands.
+- Feature branch remains `feat/universal-3d-piping`; main is untouched.
+- The scripts have not been executed on Windows in this environment. The Gmsh smoke run may reveal OCC material-tagging and boundary issues. Do not claim validated FEM.
+- Offline v0.4–v0.6 archive changes are NOT on GitHub. User should provide latest ZIP to Codex for a controlled diff/port if desired.
