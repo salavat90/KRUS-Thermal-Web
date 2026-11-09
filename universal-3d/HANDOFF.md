@@ -48,3 +48,9 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 - Feature branch remains `feat/universal-3d-piping`; main is untouched.
 - The scripts have not been executed on Windows in this environment. The Gmsh smoke run may reveal OCC material-tagging and boundary issues. Do not claim validated FEM.
 - Offline v0.4–v0.6 archive changes are NOT on GitHub. User should provide latest ZIP to Codex for a controlled diff/port if desired.
+
+## 2026-11-09 — One-click Codex Windows 11 migration
+- New distribution outside Git: `KRUS-Thermal-Codex-Turnkey-Win11.zip`. Contains original unmodified offline `KRUS-Thermal-Universal3D-offline-v0.6.zip` plus automated WinGet/CMD setup for Git, Python, Node.js, VS Code, Codex, Visual C++ runtime and Python FEM dependencies.
+- After Windows setup `migration-input/legacy-v0.6` has extracted last offline app, and `migration-input/KRUS-Thermal-Web-feature-branch.zip` has ZIP snapshot of checked-out Git branch. Do not confuse these baselines. See `universal-3d/CODEX_WINDOWS_MIGRATION.md` and `AGENTS.md`.
+- GitHub feature branch also has VS Code Codex extension recommendations and FEM smoke task. Installation may need UAC/GitHub/ChatGPT authentication. Windows end-to-end setup is **not tested here**; packet static checks and v0.6 JS smoke test performed separately.
+- **Do not claim 3D FEM validated**. First Codex work: test Gmsh OCC contacts and physical BC, compare v0.6 UI, unify code paths and add physics benchmarks.
