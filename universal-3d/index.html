@@ -10,7 +10,7 @@
 <label>Плоскость построения</label><select id="plane"><option value="XZ">XZ (горизонтальная)</option><option value="XY">XY (вертикальная)</option><option value="YZ">YZ (вертикальная)</option></select>
 <label>Координата плоскости, м</label><input id="offset" type="number" value="0" step=".1">
 <label>Привязка к сетке, м</label><input id="snap" type="number" value=".25" min=".001" step=".05">
-<div class="buttons"><button id="finish">Завершить ветку</button><button id="undo">Отменить</button></div>
+<div class="buttons"><button id="finish">Завершить ветку</button><button id="split">Разделить выбранную трубу</button><button id="undo">Отменить</button></div>
 <p class="hint">В режиме рисования щёлкайте по рабочей плоскости. Для байпаса начните от существующего узла и закончите на другом узле. Клавиша Esc завершает ветку. В режиме выделения кликните по трубе.</p>
 </div></details>
 <details open><summary>Параметры выбранного участка</summary><div>
@@ -32,7 +32,7 @@
 <label>Режим отображения</label><select id="mode"><option value="solid">Объёмная модель</option><option value="wire">Каркас</option><option value="heat">Оценка удельных потерь (не FEM)</option></select>
 </div></details>
 <details open><summary>Объекты и результаты</summary><div><div id="objects"></div><p class="hint" id="summary"></p></div></details>
-<div class="buttons"><button id="demo">Пример с байпасом</button><button id="save">Сохранить JSON</button><button id="load">Открыть JSON</button></div><input type="file" id="files" accept=".json">
+<div class="buttons"><button id="demo">Пример с байпасом</button><button id="save">Сохранить JSON</button><button id="export">Экспорт для CAD/FEM</button><button id="load">Открыть JSON</button></div><input type="file" id="files" accept=".json">
 <p class="hint">Внимание: объёмная геометрия — предварительная визуализация. Тройники и сопряжения здесь не являются точными CAD Boolean-телами. Теплопотери — аналитическая оценка для прямых участков, а не 3D FEM. Для полноценного расчёта требуется Gmsh/OCC и граничные условия.</p>
 </aside><section><canvas id="view"></canvas><div id="overlay">ЛКМ: построение/выделение · ПКМ: вращение · колесо: масштаб</div><div id="status">Готов к построению</div></section></main>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
@@ -55,6 +55,37 @@ function nextId(prefix){return prefix+(Math.max(0,...[...project.nodes,...projec
 function remember(){history.push(JSON.stringify(project));if(history.length>40)history.shift()}
 function addNode(p){const tol=Math.max(.01,Number($('snap').value)*.25);const found=project.nodes.find(n=>vec(n.p).distanceTo(vec(p))<tol);if(found)return found.id;const id=nextId('N');project.nodes.push({id,p});return id}
 function addEdge(a,b){if(a===b)return;const A=getNode(a),B=getNode(b);if(!A||!B)return;const length=vec(A.p).distanceTo(vec(B.p));if(length<.001)return;const duplicate=project.edges.find(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));if(duplicate)return;project.edges.push({id:nextId('E'),a,b,...defaults()});selected=project.edges.at(-1).id}
+function splitEdge(id,t=.5){
+ const e=project.edges.find(x=>x.id===id);if(!e)throw Error('Выберите участок для разделения');
+ if(!(t>.001&&t<.999))throw Error('Точка разделения слишком близка к концу');
+ const a=vec(getNode(e.a).p),b=vec(getNode(e.b).p),p=a.lerp(b,t).toArray();
+ const node=addNode(p);if(node===e.a||node===e.b)throw Error('Слишком близко к существующему узлу');
+ const tail={...e,id:nextId('E'),a:node,b:e.b};
+ e.b=node;project.edges.push(tail);selected=tail.id;
+ return node;
+}
+function validateTopology(){
+ validate();
+ const issues=[],degree=new Map(project.nodes.map(n=>[n.id,0]));
+ const seen=new Set();
+ for(const e of project.edges){
+  const key=[e.a,e.b].sort().join(':');
+  if(seen.has(key))issues.push('Повторный участок '+e.id);seen.add(key);
+  degree.set(e.a,(degree.get(e.a)||0)+1);degree.set(e.b,(degree.get(e.b)||0)+1);
+  const L=vec(getNode(e.a).p).distanceTo(vec(getNode(e.b).p));
+  if(L<.001)issues.push('Нулевая длина '+e.id);
+ }
+ const isolated=[...degree].filter(([_,d])=>d===0).map(([id])=>id);
+ if(isolated.length)issues.push('Изолированные узлы: '+isolated.join(', '));
+ const adjacency=new Map(project.nodes.map(n=>[n.id,[]]));
+ for(const e of project.edges){adjacency.get(e.a).push(e.b);adjacency.get(e.b).push(e.a)}
+ const visited=new Set();let components=0;
+ for(const n of project.nodes){if(visited.has(n.id))continue;components++;const stack=[n.id];while(stack.length){const id=stack.pop();if(visited.has(id))continue;visited.add(id);stack.push(...adjacency.get(id))}}
+ if(components>1)issues.push('Несвязанных компонентов: '+components);
+ const branchNodes=[...degree].filter(([_,d])=>d>=3).map(([id])=>id);
+ const cycles=project.edges.length-project.nodes.length+components;
+ return {issues,components,branchNodes,cycles};
+}
 function cylBetween(a,b,r,material){const dir=b.clone().sub(a),len=dir.length();if(len<.0001)return null;const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,14,1,true),material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());return mesh}
 function loss(e){const L=vec(getNode(e.a).p).distanceTo(vec(getNode(e.b).p));const r=e.diameter/2000,R=r+e.insulation/1000,dt=e.temp-e.air;const h=12;const resist=e.insulation>0?Math.log(R/r)/(2*Math.PI*e.lambda)+1/(2*Math.PI*R*h):1/(2*Math.PI*r*h);return {length:L,q:dt/resist,watts:dt/resist*L}}
 function clear(){for(const child of [...group.children]){group.remove(child);child.traverse(o=>{o.geometry?.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose())}})}pickables=[]}
@@ -71,12 +102,14 @@ function renderModel(){
  }
  for(const n of project.nodes){const p=vec(n.p);const mesh=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),new THREE.MeshBasicMaterial({color:n.id===lastNode?0xf08825:0x244d70}));mesh.position.copy(p);mesh.userData.node=n.id;group.add(mesh);pickables.push(mesh)}
  $('objects').innerHTML='';for(const e of project.edges){const d=document.createElement('div');d.className='item'+(selected===e.id?' active':'');d.textContent=e.id+' · Ø'+e.diameter+' · '+loss(e).length.toFixed(2)+' м';d.onclick=()=>select(e.id);$('objects').append(d)}
- $('summary').textContent='Узлов: '+project.nodes.length+' · участков: '+project.edges.length+' · длина: '+totalL.toFixed(2)+' м · оценка теплопотерь: '+total.toFixed(1)+' Вт · нагрев: '+project.edges.reduce((s,e)=>s+e.power*loss(e).length,0).toFixed(1)+' Вт. Внимание: оценка без тройников, отводов и тепловых мостов.';
+ const topology=validateTopology();
+ $('summary').textContent='Топология: ветвлений '+topology.branchNodes.length+' · циклов '+topology.cycles+' · компонентов '+topology.components+(topology.issues.length?' · ПРОВЕРИТЬ: '+topology.issues.join('; '):' · без замечаний')+'\\nУзлов: '+project.nodes.length+' · участков: '+project.edges.length+' · длина: '+totalL.toFixed(2)+' м · оценка теплопотерь: '+total.toFixed(1)+' Вт · нагрев: '+project.edges.reduce((s,e)=>s+e.power*loss(e).length,0).toFixed(1)+' Вт. Внимание: оценка без тройников, отводов и тепловых мостов.';
 }
 function select(id){selected=id;const e=project.edges.find(x=>x.id===id);if(e)for(const key of ['diameter','wall','insulation','temp','air','lambda','power','bend'])$(key).value=e[key]??0;renderModel()}
 function worldPoint(event){const rect=canvas.getBoundingClientRect();mouse.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(mouse,camera);const axis=$('plane').value,offset=Number($('offset').value)||0;const normal=axis==='XZ'?new THREE.Vector3(0,1,0):axis==='XY'?new THREE.Vector3(0,0,1):new THREE.Vector3(1,0,0);const plane=new THREE.Plane().setFromNormalAndCoplanarPoint(normal,normal.clone().multiplyScalar(offset));const hit=new THREE.Vector3();if(!ray.ray.intersectPlane(plane,hit))return null;const step=Math.max(.001,Number($('snap').value)||.25);return hit.toArray().map(x=>Math.round(x/step)*step)}
 let down=null;canvas.addEventListener('pointerdown',e=>{if(e.button===0)down=[e.clientX,e.clientY]});canvas.addEventListener('pointerup',e=>{if(e.button!==0||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;const rect=canvas.getBoundingClientRect();mouse.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(mouse,camera);const hits=ray.intersectObjects(pickables,false);const tool=$('tool').value;if(tool==='select'){const edge=hits.find(h=>h.object.userData.edge);if(edge)select(edge.object.userData.edge);return}
  const p=worldPoint(e);if(!p)return;remember();let id;if(hits.length&&hits[0].object.userData.node)id=hits[0].object.userData.node;else id=addNode(p);if(lastNode&&lastNode!==id)addEdge(lastNode,id);lastNode=id;renderModel();status('Точка '+id+'; продолжайте ветку или нажмите «Завершить ветку»')});
+$('split').onclick=()=>{try{remember();const node=splitEdge(selected);renderModel();status('Участок разделён. Новый узел '+node)}catch(err){status('Разделение: '+err.message)}};
 $('finish').onclick=()=>{lastNode=null;renderModel()};$('undo').onclick=()=>{if(history.length){project=JSON.parse(history.pop());lastNode=null;selected=null;renderModel()}};window.addEventListener('keydown',e=>{if(e.key==='Escape')$('finish').click()});
 $('apply').onclick=()=>{const e=project.edges.find(x=>x.id===selected);if(!e)return;remember();Object.assign(e,defaults());renderModel()};
 $('remove').onclick=()=>{remember();project.edges=project.edges.filter(x=>x.id!==selected);selected=null;renderModel()};
@@ -84,6 +117,7 @@ for(const id of ['axes','steel','ins','heaters','mode'])$(id).onchange=renderMod
 function demo(){project={version:1,nodes:[{id:'N1',p:[0,0,0]},{id:'N2',p:[3,0,0]},{id:'N3',p:[6,0,0]},{id:'N4',p:[3,0,2]},{id:'N5',p:[6,0,2]},{id:'N6',p:[6,0,4]},{id:'N7',p:[8,0,4]}],edges:[]};const edges=[['N1','N2'],['N2','N3'],['N2','N4'],['N4','N5'],['N5','N3'],['N3','N6'],['N6','N7']];edges.forEach(([a,b],i)=>project.edges.push({id:'E'+(i+1),a,b,...defaults()}));selected=null;lastNode=null;renderModel();controls.target.set(4,0,2);camera.position.set(11,8,12);controls.update()}
 $('demo').onclick=()=>{remember();demo()};
 $('save').onclick=()=>{const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KRUS-pipeline.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('export').onclick=()=>{try{const t=validateTopology();if(t.issues.length)throw Error(t.issues.join('; '));const payload={schema:'KRUS.Thermal.Piping.v1',units:'m',nodes:project.nodes,segments:project.edges,topology:{branchNodes:t.branchNodes,cycles:t.cycles},geometryStatus:'centerline only; CAD solids and FEM mesh not generated'};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KRUS-piping-CAD-input.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Граф экспортирован для последующего CAD/FEM генератора')}catch(err){status('Экспорт: '+err.message)}};
 $('load').onclick=()=>$('files').click();$('files').onchange=async e=>{try{const obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.nodes)||!Array.isArray(obj.edges)||obj.nodes.length>50000||obj.edges.length>50000)throw Error('Некорректный проект');remember();project=obj;validate();selected=null;lastNode=null;renderModel();status('Проект загружен')}catch(err){status('Ошибка файла: '+err.message)}};
 new ResizeObserver(()=>{const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}).observe(canvas);
 function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera)}demo();loop();
