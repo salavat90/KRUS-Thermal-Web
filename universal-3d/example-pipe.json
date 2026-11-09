@@ -1,0 +1,41 @@
+{
+  "schema": "KRUS.Thermal.Piping.v1",
+  "units": "m",
+  "nodes": [
+    {
+      "id": "N1",
+      "p": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "N2",
+      "p": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "id": "E1",
+      "a": "N1",
+      "b": "N2",
+      "diameter": 108,
+      "wall": 4,
+      "insulation": 50,
+      "temp": 60,
+      "air": -40,
+      "lambda": 0.04,
+      "power": 30,
+      "bend": 0
+    }
+  ],
+  "topology": {
+    "branchNodes": [],
+    "cycles": 0
+  }
+}
