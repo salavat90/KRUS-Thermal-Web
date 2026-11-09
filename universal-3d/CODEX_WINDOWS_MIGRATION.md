@@ -7,7 +7,7 @@ The assistant provides a Windows 11 bootstrap ZIP containing `01-INSTALL-EVERYTH
 
 The bootstrap uses WinGet to install Git for Windows, Python 3.11, Node.js LTS, Visual Studio Code and Visual C++ runtime when missing; npm installs OpenAI Codex CLI in a user-owned folder; VS Code receives the OpenAI Codex extension; pip creates `.venv` with Gmsh, NumPy and SciPy.
 
-It clones/updates this exact GitHub branch into `%USERPROFILE%\KRUS\KRUS-Thermal-Web`, archives the branch source **after clone**, copies/extracts legacy v0.6 to `migration-input\` and writes migration reports. **No PowerShell** is required for routine installation. Administrator approval may be required for some WinGet packages. Network is required for first setup.
+It clones/updates this exact GitHub branch into `C:\KRUS-Thermal-Web`, archives the branch source **after clone**, copies/extracts legacy v0.6 to `migration-input\` and writes migration reports. **No PowerShell** is required for routine installation. Administrator approval may be required for some WinGet packages. Network is required for first setup.
 
 ## Critical: two different code baselines
 1. **Offline v0.6** is a no-install, browser-based 1D thermal-network editor with enhanced node deletion, simplified UI, 0.25 m axial discretization and heat balance. Its original ZIP is held in `migration-input` by the installer, not committed to Git.
@@ -27,3 +27,6 @@ The user must confirm any Windows User Account Control (UAC) requests from trust
 
 ## Safeguards
 Do not commit passwords, OpenAI auth files, API keys, tokens, `.venv`, `migration-input` or results data. Prefer branch-specific commits with tests and append to `universal-3d/HANDOFF.md`.
+
+## Fixed Windows project directory
+All project checkout, `.venv`, legacy archive, branch snapshots and FEM outputs are under `C:\KRUS-Thermal-Web`. The turnkey installer's `bootstrap/common.cmd` defines `KRUS_PROJECT=C:\KRUS-Thermal-Web`. Codex CLI installation and installer logs are outside the repository at `%LOCALAPPDATA%\KRUS-Thermal-Tools`, to avoid creating a non-Git target directory before the clone. Previous project paths under `%USERPROFILE%\KRUS` are obsolete.
