@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "KRUS: Check 3D FEM (Windows)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\smoke-fem-windows.cmd",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "KRUS: Start web editor",
+      "type": "shell",
+      "command": "${workspaceFolder}\\run-editor-windows.cmd",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
