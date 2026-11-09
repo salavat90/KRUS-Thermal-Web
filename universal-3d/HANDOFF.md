@@ -28,3 +28,9 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 
 ## Continuation prompt
 «Открой `salavat90/KRUS-Thermal-Web` ветку `feat/universal-3d-piping`, прочитай `universal-3d/HANDOFF.md` и продолжи реализацию полноценного редактора трубопроводов с Gmsh/FEM, не затрагивая main 2D/3D.»
+
+## 2026-11-09 — topology editor improvements
+- Added split-selected-segment at midpoint; original edge retains properties and second edge copies them. Enables explicit tee junction placement by splitting before drawing a branch.
+- Added topology diagnostics: connected components, isolated nodes, branch nodes (degree>=3), graph cycle count. Bypasses are recognized as cycles, not treated as invalid.
+- Added export `KRUS-piping-CAD-input.json` with schema `KRUS.Thermal.Piping.v1`, units meters, nodes/segments and graph topology. This is centerline data only, **not** an OCC BREP or FEM mesh.
+- Commit `c107b1c`. Browser execution and automated tests NOT verified. Remaining: snap click to split position, actual bend/tee solids, OCC/Gmsh service and solver. Do not claim full FEM.
