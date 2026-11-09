@@ -34,3 +34,10 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 - Added topology diagnostics: connected components, isolated nodes, branch nodes (degree>=3), graph cycle count. Bypasses are recognized as cycles, not treated as invalid.
 - Added export `KRUS-piping-CAD-input.json` with schema `KRUS.Thermal.Piping.v1`, units meters, nodes/segments and graph topology. This is centerline data only, **not** an OCC BREP or FEM mesh.
 - Commit `c107b1c`. Browser execution and automated tests NOT verified. Remaining: snap click to split position, actual bend/tee solids, OCC/Gmsh service and solver. Do not claim full FEM.
+
+## 2026-11-09 — OCC/Gmsh and sparse 3D FEM experimental backend
+- Added `mesh3d.py`: straight centerline cylinders, Boolean union/cut/fragment of steel, insulation and fluid, Gmsh tetra JSON.
+- Added `solve3d.py`: tetrahedral P1 sparse stationary conduction, steel volumetric heating, fixed fluid temperature and exterior convection, energy-balance report and nodal temperature output.
+- Added `requirements.txt`, `conditions.example.json`, `README-3DFEM.md`. The editor can import the numerical FEM summary JSON, not the 3D field rendering.
+- WARNING: This is not a complete or validated universal thermal engineering application. No actual Gmsh execution in this environment; geometry and BC need testing on straight pipe, tee, bypass and elbow. It does not model standard elbow radii, local valves/flanges/supports, cable contact, fluid flow or coupled CFD. Energy balance does not imply physical accuracy.
+- Continue by validating OCC material contacts, tetra quality, end-face conditions, benchmark and convergence, then integrate backend into a one-click UI. Do not claim finished production status.
