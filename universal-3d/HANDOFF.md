@@ -54,3 +54,8 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 - After Windows setup `migration-input/legacy-v0.6` has extracted last offline app, and `migration-input/KRUS-Thermal-Web-feature-branch.zip` has ZIP snapshot of checked-out Git branch. Do not confuse these baselines. See `universal-3d/CODEX_WINDOWS_MIGRATION.md` and `AGENTS.md`.
 - GitHub feature branch also has VS Code Codex extension recommendations and FEM smoke task. Installation may need UAC/GitHub/ChatGPT authentication. Windows end-to-end setup is **not tested here**; packet static checks and v0.6 JS smoke test performed separately.
 - **Do not claim 3D FEM validated**. First Codex work: test Gmsh OCC contacts and physical BC, compare v0.6 UI, unify code paths and add physics benchmarks.
+
+## 2026-11-11 — Codex integration source inventory
+- New verified source-based integration brief: `universal-3d/CODEX_INTEGRATION_BRIEF.md` (2D pipe `main:random-mesh.html`, `experimental/random-thermal.js`; vessel `main:3d/fem-lab.html`, `generate_vessel_mesh.py`, `full-vessel-fem.js`, `tetra-slice.js`, `flux-field.js`; piping on feature branch).
+- Distinguishes Gmsh mesh `pts` vs `points`, seven-region vessel contract vs three-region pipe contract, and source/UI limitations. Prescribes common schema and test matrix T01–T10. No code or FEM physics changed by this documentation commit.
+- Integrate exclusively in `feat/universal-3d-piping`, preserve main and local uncommitted work. The offline v0.6 archive may exist in local `migration-input`, not GitHub.
