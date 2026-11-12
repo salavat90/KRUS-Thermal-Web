@@ -30,3 +30,6 @@ Develop KRUS-Thermal Universal 3D as a Windows-friendly engineering thermal CAD/
 
 ## Codex Windows turnkey migration
 The separate Windows bootstrap distribution (created 2026-11-09) installs Git, Python 3.11, Node.js LTS, VS Code, OpenAI Codex CLI/IDE extension, VC++ runtime, and Python Gmsh/NumPy/SciPy. It automatically clones `feat/universal-3d-piping` and places the original offline v0.6 archive and extracted code in `migration-input/legacy-v0.6/`. It also creates a ZIP snapshot of the Git branch and a setup report inside `migration-input/` (gitignored). Read `universal-3d/CODEX_WINDOWS_MIGRATION.md` and `migration-input/CODEX_FIRST_TASK.txt`. Compare and integrate, do not overwrite. Installer/mesh/physics not fully validated on a real Windows host.
+
+## Integrating 2D pipe + 3D vessel + universal piping
+For the user's integration project, first read `universal-3d/CODEX_INTEGRATION_BRIEF.md`. It audits actual `main` 2D pipe and vessel FEM sources, incompatible mesh schemas, integration architecture, explicit source limitations and acceptance tests T01–T10. Read-only access to main reference files; all modifications remain on `feat/universal-3d-piping`. Do not treat a green energy balance as physical verification.
