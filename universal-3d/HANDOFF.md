@@ -59,3 +59,9 @@ Branch: `feat/universal-3d-piping`. Base: `main`. **Do not modify the frozen 2D 
 - New verified source-based integration brief: `universal-3d/CODEX_INTEGRATION_BRIEF.md` (2D pipe `main:random-mesh.html`, `experimental/random-thermal.js`; vessel `main:3d/fem-lab.html`, `generate_vessel_mesh.py`, `full-vessel-fem.js`, `tetra-slice.js`, `flux-field.js`; piping on feature branch).
 - Distinguishes Gmsh mesh `pts` vs `points`, seven-region vessel contract vs three-region pipe contract, and source/UI limitations. Prescribes common schema and test matrix T01–T10. No code or FEM physics changed by this documentation commit.
 - Integrate exclusively in `feat/universal-3d-piping`, preserve main and local uncommitted work. The offline v0.6 archive may exist in local `migration-input`, not GitHub.
+
+## 2026-11-11 — integration priority clarified: preserve current Codex 3D
+- User confirms substantial development already done inside Windows Codex. Treat **actual local current 3D code, its tests, commits and uncommitted changes** as the baseline to extend; GitHub documentation may lag.
+- Do not restart 3D editor, geometry, FEM or visualization from old examples or overwrite them by 2D/vessel implementations. Use those only to fill demonstrable gaps after comparing functionality.
+- Before integrating, audit local Git state and modules, create non-destructive backup/snapshot, inventory features and regression-test existing workflows.
+- Details and decision matrix instructions are in `universal-3d/CODEX_INTEGRATION_BRIEF.md` section 0A. Update the handoff once the Codex-specific current implementation has been inventoried.
